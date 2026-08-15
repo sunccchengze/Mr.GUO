@@ -6,12 +6,17 @@
       "id": "2026-01",
       "title": "Generative Transfer Optimization for More Efficient Turbine Blade Design",
       "doi": "10.1016/j.ast.2026.112324",
-      "matched_title": null,
-      "match_score": 0,
-      "metadata_source": null,
-      "abstract_available": false,
+      "matched_title": "Generative transfer optimization for more efficient turbine blade design",
+      "match_score": 1.0,
+      "metadata_source": "ScienceDirect publisher article preview",
+      "abstract_available": true,
       "pdf": null,
-      "markdown": "01_2026-01.md"
+      "markdown": "01_2026-01.md",
+      "publisher_url": "https://www.sciencedirect.com/science/article/abs/pii/S1270963826007042",
+      "venue": "Aerospace Science and Technology",
+      "volume": "177, Part B",
+      "publication_date": "2026-10",
+      "article_number": "112324"
     },
     {
       "number": 2,
