@@ -126,14 +126,20 @@
     {
       "number": 8,
       "id": "2025-08",
-      "title": "Optimization of Multi-Architecture Gas Turbine Design Employing a 3-Stream Joule-Humphrey Cycle for Cleaner Propulsion",
-      "doi": null,
-      "matched_title": null,
-      "match_score": 0,
-      "metadata_source": null,
-      "abstract_available": false,
+      "title": "Optimizing Multi-Architecture Gas Turbine Design Employing a 3-Stream Joule-Humphrey Cycle for Cleaner Propulsion",
+      "doi": "10.1115/GT2025-153757",
+      "matched_title": "Optimizing Multi-Architecture Gas Turbine Design Employing a 3-Stream Joule-Humphrey Cycle for Cleaner Propulsion",
+      "match_score": 1.0,
+      "metadata_source": "ASME Digital Collection publisher record",
+      "abstract_available": true,
       "pdf": null,
-      "markdown": "08_2025-08.md"
+      "markdown": "08_2025-08.md",
+      "publisher_url": "https://asmedigitalcollection.asme.org/GT/proceedings-abstract/GT2025/88803/1220330",
+      "venue": "Proceedings of the ASME Turbo Expo 2025",
+      "publication_date": "Published online August 11, 2025",
+      "paper_number": "GT2025-153757, V004T06A033; 13 pages",
+      "authors": "Carlos Ávila Catalán; Jorge Saavedra; Luis Cadarso",
+      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo、Liming Song 或 Jun Li；此条保留为相关技术参考而非已确认团队论文。"
     },
     {
       "number": 9,
