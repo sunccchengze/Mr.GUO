@@ -2,8 +2,8 @@
 
 - Requested entries: 25
 - Open-access PDFs downloaded: 0
-- Metadata abstracts retrieved: 17
-- Entries needing manual follow-up: 8
+- Metadata abstracts retrieved: 19
+- Entries needing manual follow-up: 6
 
 ## Important notes
 
