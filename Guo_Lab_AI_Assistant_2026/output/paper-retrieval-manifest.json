@@ -399,25 +399,35 @@
       "number": 24,
       "id": "2021-24",
       "title": "Aero-thermal optimization of a gas turbine blade endwall with non-axisymmetric contouring and purge flow",
-      "doi": null,
-      "matched_title": null,
-      "match_score": 0,
-      "metadata_source": null,
-      "abstract_available": false,
+      "doi": "10.1016/j.ijheatmasstransfer.2021.121626",
+      "matched_title": "Aero-thermal optimization of a gas turbine blade endwall with non-axisymmetric contouring and purge flow",
+      "match_score": 1.0,
+      "metadata_source": "publisher article record",
+      "abstract_available": true,
       "pdf": null,
-      "markdown": "24_2021-24.md"
+      "markdown": "24_2021-24.md",
+      "publisher_url": "https://www.sciencedirect.com/science/article/abs/pii/S0017931021007298",
+      "venue": "International Journal of Heat and Mass Transfer",
+      "publication_date": "October 2021; Volume 178, Article 121626",
+      "authors": "Zhi Tao; Zhendong Guo; Boyang Yu; Liming Song; Jun Li",
+      "authorship_note": "作者列表已核对，包含 Zhendong Guo。"
     },
     {
       "number": 25,
       "id": "2021-25",
-      "title": "Global Optimisation of a Transonic Fan Blade Through AI-Enabled Active Subspaces",
-      "doi": null,
-      "matched_title": null,
-      "match_score": 0,
-      "metadata_source": null,
-      "abstract_available": false,
+      "title": "Global Optimization of a Transonic Fan Blade Through AI-Enabled Active Subspaces",
+      "doi": "10.1115/1.4052136",
+      "matched_title": "Global Optimization of a Transonic Fan Blade Through AI-Enabled Active Subspaces",
+      "match_score": 1.0,
+      "metadata_source": "publisher article record",
+      "abstract_available": true,
       "pdf": null,
-      "markdown": "25_2021-25.md"
+      "markdown": "25_2021-25.md",
+      "publisher_url": "https://asmedigitalcollection.asme.org/turbomachinery/article-abstract/144/1/011013/1115759/Global-Optimization-of-a-Transonic-Fan-Blade",
+      "venue": "Journal of Turbomachinery",
+      "publication_date": "January 2022; 144(1): 011013; published online September 21, 2021",
+      "authors": "Diego I. Lopez; Tiziano Ghisu; Shahrokh Shahpar",
+      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo；此条保留为相关技术参考而非已确认团队论文。"
     }
   ]
 }
