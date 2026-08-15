@@ -1,30 +1,14 @@
 {
   "title": "Memory and Search Skills",
-  "count": 18,
+  "count": 19,
   "skills": [
     {
-      "name": "memory-system",
+      "name": "agentic-os",
       "type": "memory",
       "sourceId": "community",
-      "sourcePath": "skills/community/memory-system/SKILL.md",
-      "installedPath": "skills/memory/memory-system",
-      "sha256": "948f8d91b7d01be20c4f02c4d6d819bf1d6c12a6e6646b31ad76a554d20c45e4"
-    },
-    {
-      "name": "unified-memory",
-      "type": "memory",
-      "sourceId": "community",
-      "sourcePath": "skills/community/ECC/skills/unified-memory/SKILL.md",
-      "installedPath": "skills/memory/unified-memory",
-      "sha256": "a6eb9a96b92dfd4a700bceff15195ca1fd4b7fad2944bb014c08812d1a0dc8b0"
-    },
-    {
-      "name": "knowledge-ops",
-      "type": "memory",
-      "sourceId": "community",
-      "sourcePath": "skills/community/ECC/skills/knowledge-ops/SKILL.md",
-      "installedPath": "skills/memory/knowledge-ops",
-      "sha256": "958529713af2ab29c7b31b3cb758953271174b8909c94f1238dd7c78671672c2"
+      "sourcePath": "skills/community/ECC/skills/agentic-os/SKILL.md",
+      "installedPath": "skills/memory/agentic-os",
+      "sha256": "c5f6c806ffedb21087ba337ecd578fff9b644f022624f2d436b1783eedc5b89b"
     },
     {
       "name": "autonomous-agent-harness",
@@ -35,12 +19,12 @@
       "sha256": "4de9a47cdeb0ad2c3838878f13c676db4fbe4a68b4cdda54a6851b28e6facdaa"
     },
     {
-      "name": "agentic-os",
+      "name": "knowledge-ops",
       "type": "memory",
       "sourceId": "community",
-      "sourcePath": "skills/community/ECC/skills/agentic-os/SKILL.md",
-      "installedPath": "skills/memory/agentic-os",
-      "sha256": "c5f6c806ffedb21087ba337ecd578fff9b644f022624f2d436b1783eedc5b89b"
+      "sourcePath": "skills/community/ECC/skills/knowledge-ops/SKILL.md",
+      "installedPath": "skills/memory/knowledge-ops",
+      "sha256": "958529713af2ab29c7b31b3cb758953271174b8909c94f1238dd7c78671672c2"
     },
     {
       "name": "memory-review",
@@ -59,6 +43,14 @@
       "sha256": "76a903945568faba3146a5523654d1a606f297bb704dc3d283e00a2780e87bc0"
     },
     {
+      "name": "memory-system",
+      "type": "memory",
+      "sourceId": "community",
+      "sourcePath": "skills/community/memory-system/SKILL.md",
+      "installedPath": "skills/memory/memory-system",
+      "sha256": "948f8d91b7d01be20c4f02c4d6d819bf1d6c12a6e6646b31ad76a554d20c45e4"
+    },
+    {
       "name": "obsidian",
       "type": "memory",
       "sourceId": "hermes-agent",
@@ -67,28 +59,20 @@
       "sha256": "7aea4e8f89f94ab2876d79898d10a5d4cdab31390c53f72ad6934b071179f826"
     },
     {
-      "name": "deep-research",
-      "type": "search",
+      "name": "unified-memory",
+      "type": "memory",
       "sourceId": "community",
-      "sourcePath": "skills/community/ECC/skills/deep-research/SKILL.md",
-      "installedPath": "skills/search/deep-research",
-      "sha256": "f85e06874ffd0fcfea6051b4292f45fc2b7e4cd47586659817ddbafd6bea3ede"
+      "sourcePath": "skills/community/ECC/skills/unified-memory/SKILL.md",
+      "installedPath": "skills/memory/unified-memory",
+      "sha256": "a6eb9a96b92dfd4a700bceff15195ca1fd4b7fad2944bb014c08812d1a0dc8b0"
     },
     {
-      "name": "search-first",
+      "name": "agent-reach",
       "type": "search",
       "sourceId": "community",
-      "sourcePath": "skills/community/ECC/skills/search-first/SKILL.md",
-      "installedPath": "skills/search/search-first",
-      "sha256": "d66d744228b9cf860acf35f8a90cbbe8195e61367860da9d3632f9fc65706733"
-    },
-    {
-      "name": "research-ops",
-      "type": "search",
-      "sourceId": "community",
-      "sourcePath": "skills/community/ECC/skills/research-ops/SKILL.md",
-      "installedPath": "skills/search/research-ops",
-      "sha256": "114d0e5480ce3ad263316c639ce0c401396e1d9fbec3cf15b3c962ae16f376db"
+      "sourcePath": "skills/community/agent-reach/agent_reach/skill/SKILL.md",
+      "installedPath": "skills/search/agent-reach",
+      "sha256": "621796ede32bbac680dcbc9f15110cdb9b569ebffc3de27ed9aafda9e0f9fbcf"
     },
     {
       "name": "anysearch",
@@ -99,22 +83,6 @@
       "sha256": "62fc50a03066cbf45b4e89c201736e3c93daf92b269a164a747a0f6e45ec2644"
     },
     {
-      "name": "websearch",
-      "type": "search",
-      "sourceId": "community",
-      "sourcePath": "skills/community/prime-agent/packages/coding-agent/skills/websearch/SKILL.md",
-      "installedPath": "skills/search/websearch",
-      "sha256": "4166238a533012f3a206ddc003c85941bbc4487316c33d03bf015571d4d4a1fd"
-    },
-    {
-      "name": "exa-search",
-      "type": "search",
-      "sourceId": "scientific-agent-skills",
-      "sourcePath": "full-sources/research/scientific-agent-skills/skills/exa-search/SKILL.md",
-      "installedPath": "skills/search/exa-search",
-      "sha256": "1986353174a63bcecc840a3f7c3d9e47f1bad4d29a37600d7137876100bccc69"
-    },
-    {
       "name": "bgpt-paper-search",
       "type": "search",
       "sourceId": "scientific-agent-skills",
@@ -123,12 +91,12 @@
       "sha256": "6013089aadc2475e9386b990b9328e2d151ce25fd868396ce2e04c6fc424ab9b"
     },
     {
-      "name": "parallel-web",
+      "name": "deep-research",
       "type": "search",
-      "sourceId": "scientific-agent-skills",
-      "sourcePath": "full-sources/research/scientific-agent-skills/skills/parallel-web/SKILL.md",
-      "installedPath": "skills/search/parallel-web",
-      "sha256": "9a3cc862289195c9d13409e3ec77aae71ed6839ed0205abf28b328d61dfcfe34"
+      "sourceId": "community",
+      "sourcePath": "skills/community/ECC/skills/deep-research/SKILL.md",
+      "installedPath": "skills/search/deep-research",
+      "sha256": "f85e06874ffd0fcfea6051b4292f45fc2b7e4cd47586659817ddbafd6bea3ede"
     },
     {
       "name": "duckduckgo-search",
@@ -139,12 +107,52 @@
       "sha256": "ea5ee32dee8ba94efc7e733086c0c71d23135850ca3dd8d377822c0c6fe31939"
     },
     {
+      "name": "exa-search",
+      "type": "search",
+      "sourceId": "scientific-agent-skills",
+      "sourcePath": "full-sources/research/scientific-agent-skills/skills/exa-search/SKILL.md",
+      "installedPath": "skills/search/exa-search",
+      "sha256": "1986353174a63bcecc840a3f7c3d9e47f1bad4d29a37600d7137876100bccc69"
+    },
+    {
       "name": "openalex",
       "type": "search",
       "sourceId": "aris",
       "sourcePath": "full-sources/research/aris/skills/openalex/SKILL.md",
       "installedPath": "skills/search/openalex",
       "sha256": "4c853b646987c4472a8360e044ad232aa9731dcfb60c7183073e8e5f3e6ac9c1"
+    },
+    {
+      "name": "parallel-web",
+      "type": "search",
+      "sourceId": "scientific-agent-skills",
+      "sourcePath": "full-sources/research/scientific-agent-skills/skills/parallel-web/SKILL.md",
+      "installedPath": "skills/search/parallel-web",
+      "sha256": "9a3cc862289195c9d13409e3ec77aae71ed6839ed0205abf28b328d61dfcfe34"
+    },
+    {
+      "name": "research-ops",
+      "type": "search",
+      "sourceId": "community",
+      "sourcePath": "skills/community/ECC/skills/research-ops/SKILL.md",
+      "installedPath": "skills/search/research-ops",
+      "sha256": "114d0e5480ce3ad263316c639ce0c401396e1d9fbec3cf15b3c962ae16f376db"
+    },
+    {
+      "name": "search-first",
+      "type": "search",
+      "sourceId": "community",
+      "sourcePath": "skills/community/ECC/skills/search-first/SKILL.md",
+      "installedPath": "skills/search/search-first",
+      "sha256": "d66d744228b9cf860acf35f8a90cbbe8195e61367860da9d3632f9fc65706733"
+    },
+    {
+      "name": "websearch",
+      "type": "search",
+      "sourceId": "community",
+      "sourcePath": "skills/community/prime-agent/packages/coding-agent/skills/websearch/SKILL.md",
+      "installedPath": "skills/search/websearch",
+      "sha256": "4166238a533012f3a206ddc003c85941bbc4487316c33d03bf015571d4d4a1fd"
     }
   ]
 }

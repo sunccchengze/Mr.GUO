@@ -1,6 +1,6 @@
 # Guo Lab Knowledge Base 2026 — Research Agent Skills
 
-此目录从 [`sunccchengze/-SKILL-`](https://github.com/sunccchengze/-SKILL-/tree/arena/019ffbe9-skill) 选取并导入 **100 个科研技能包**，并补充 **18 个记忆与搜索技能包**。
+此目录从 [`sunccchengze/-SKILL-`](https://github.com/sunccchengze/-SKILL-/tree/arena/019ffbe9-skill) 选取并导入 **100 个科研技能包**，并补充 **19 个记忆与搜索技能包**。
 
 ## 使用原则
 
@@ -24,7 +24,7 @@
 
 - `skills/<source>/<skill>/SKILL.md`：可直接读取的技能入口；相关上游包文件一并保留。
 - `catalog/research-skills-100.json`：100 项科研技能的来源、固定提交、Git blob 校验值及本地安装路径清单。
-- `catalog/memory-and-search-skills.json`：18 项记忆与搜索技能的来源、本地路径与 SHA-256 校验值清单。
+- `catalog/memory-and-search-skills.json`：19 项记忆与搜索技能的来源、本地路径与 SHA-256 校验值清单。
 - `skills/memory/`：长期记忆、知识库、会话归档与记忆健康管理能力。
 - `skills/search/`：深度研究、学术检索、网页检索、多源信息发现与证据检索能力。
 
