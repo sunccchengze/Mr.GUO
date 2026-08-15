@@ -1,12 +1,12 @@
 # Paper Retrieval Summary
 
-- Requested entries: 25
+- Retained team-paper entries: 16
+- Excluded related-technology references: 9
 - Open-access PDFs downloaded: 0
-- Metadata abstracts retrieved: 25
-- Entries needing manual follow-up: 0
+- Retained entries with publisher/database abstracts: 16
 
-## Important notes
+## Scope and evidence boundary
 
-- Only direct, open-access PDF links returned by public metadata were downloaded. No paywall, login, or publisher access control was bypassed.
-- Some supplied DOIs are placeholders or may not yet resolve; item-level Markdown records retain this status rather than inventing bibliographic facts.
-- Each `papers/*.md` file has the requested title, retrieval state, discovered metadata, and an abstract where an exact enough public-record match was found.
+The retained collection contains only entries whose publisher author lists include Zhendong Guo, Liming Song, or Jun Li. The nine removed Markdown records and their provenance are retained only in `excluded-non-team-papers.json` for auditability; they are not part of the core team corpus.
+
+Only direct, open-access PDF links would be downloaded. No paywall, login, or publisher access control was bypassed.

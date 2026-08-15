@@ -1,5 +1,5 @@
 {
-  "count": 25,
+  "count": 16,
   "papers": [
     {
       "number": 1,
@@ -36,23 +36,6 @@
       "article_number": "112351"
     },
     {
-      "number": 3,
-      "id": "2026-03",
-      "title": "A new framework incorporating long short-term memory and physics-informed neural networks for solving transient fluid flow problems in turbine vanes",
-      "doi": "10.1016/j.icheatmasstransfer.2025.109482",
-      "matched_title": "A new framework incorporating long short-term memory and physics-informed neural networks for solving transient fluid flow problems in turbine vanes",
-      "match_score": 1.0,
-      "metadata_source": "ScienceDirect publisher article page",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "03_2026-03.md",
-      "publisher_url": "https://www.sciencedirect.com/science/article/abs/pii/S073519332500908X",
-      "venue": "International Communications in Heat and Mass Transfer",
-      "volume": "168",
-      "publication_date": "November 2025",
-      "article_number": "109482"
-    },
-    {
       "number": 4,
       "id": "2025-04",
       "title": "A panoramic aerodynamic performance prediction method for turbomachinery cascades using transformer-enhanced neural operator",
@@ -86,60 +69,6 @@
       "paper_number": "IEEE document 11043110",
       "authors": "Yichen Hao; Linsheng Xia; Chao Bian; Zhendong Guo; Xiaofang Wang; Haitao Liu",
       "authorship_note": "作者列表已核对，包含 Zhendong Guo。"
-    },
-    {
-      "number": 6,
-      "id": "2025-06",
-      "title": "Efficient ML-Based Prediction of Turbomachinery Blade Performance With B-Spline Surface Representation",
-      "doi": "10.1115/GT2025-152689",
-      "matched_title": "Efficient ML-Based Prediction of Turbomachinery Blade Performance With B-Spline Surface Representation",
-      "match_score": 1.0,
-      "metadata_source": "ASME Digital Collection publisher record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "06_2025-06.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/GT/proceedings-abstract/GT2025/88865/1220725",
-      "venue": "Proceedings of the ASME Turbo Expo 2025",
-      "publication_date": "Published online August 11, 2025",
-      "paper_number": "GT2025-152689, V010T29A017; 13 pages",
-      "authors": "Hamun R. Bertram; Christian Janke; Robert Flassig; Peter Flassig",
-      "authorship_note": "重要核对：ASME 页面作者为 Bertram、Janke、R. Flassig、P. Flassig，未列出 Zhendong Guo；此条与“郭振东老师及团队”归属不符，保留为相关技术参考而非已确认团队论文。"
-    },
-    {
-      "number": 7,
-      "id": "2025-07",
-      "title": "Lifing Prediction Under Casting and Boundary Condition Deviations in Turbine Blades With 3-D Transformer-Based Neural Operators",
-      "doi": "10.1115/GT2025-151212",
-      "matched_title": "Lifing Prediction Under Casting and Boundary Condition Deviations in Turbine Blades With 3-D Transformer-Based Neural Operators",
-      "match_score": 1.0,
-      "metadata_source": "ASME Digital Collection publisher record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "07_2025-07.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/GT/proceedings-abstract/GT2025/88889/1220856",
-      "venue": "Proceedings of the ASME Turbo Expo 2025",
-      "publication_date": "Published online August 11, 2025",
-      "paper_number": "GT2025-151212, V012T34A001; 12 pages",
-      "authors": "Jason Abdallah; Stefan Depeweg; Kai Liebelt",
-      "authorship_note": "重要核对：ASME 页面作者为 Jason Abdallah、Stefan Depeweg、Kai Liebelt，未列出 Zhendong Guo；此条与“郭振东老师及团队”归属不符，保留为相关技术参考而非已确认团队论文。"
-    },
-    {
-      "number": 8,
-      "id": "2025-08",
-      "title": "Optimizing Multi-Architecture Gas Turbine Design Employing a 3-Stream Joule-Humphrey Cycle for Cleaner Propulsion",
-      "doi": "10.1115/GT2025-153757",
-      "matched_title": "Optimizing Multi-Architecture Gas Turbine Design Employing a 3-Stream Joule-Humphrey Cycle for Cleaner Propulsion",
-      "match_score": 1.0,
-      "metadata_source": "ASME Digital Collection publisher record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "08_2025-08.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/GT/proceedings-abstract/GT2025/88803/1220330",
-      "venue": "Proceedings of the ASME Turbo Expo 2025",
-      "publication_date": "Published online August 11, 2025",
-      "paper_number": "GT2025-153757, V004T06A033; 13 pages",
-      "authors": "Carlos Ávila Catalán; Jorge Saavedra; Luis Cadarso",
-      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo、Liming Song 或 Jun Li；此条保留为相关技术参考而非已确认团队论文。"
     },
     {
       "number": 9,
@@ -214,24 +143,6 @@
       "authorship_note": "作者列表已核对，包含 Zhendong Guo。"
     },
     {
-      "number": 13,
-      "id": "2024-13",
-      "title": "Prediction of Steady and Unsteady Flow Quantities Using Multiscale Graph Neural Networks",
-      "doi": "10.1115/1.4067179",
-      "matched_title": "Prediction of Steady and Unsteady Flow Quantities Using Multiscale Graph Neural Networks",
-      "match_score": 1.0,
-      "metadata_source": "publisher article record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "13_2024-13.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/turbomachinery/article-abstract/147/7/071015/1209226/Prediction-of-Steady-and-Unsteady-Flow-Quantities",
-      "venue": "Journal of Turbomachinery (journal extension of ASME GT2024 paper GT2024-121697)",
-      "publication_date": "July 2025 (published online December 17, 2024)",
-      "paper_number": "147(7): 071015; TURBO-24-1238; 10 pages",
-      "authors": "Sebastian Strönisch; Maximilian Sander; Marcus Meyer; Andreas Knüpfer",
-      "authorship_note": "重要核对：GT2024 与 Journal of Turbomachinery 页面作者均未列出 Zhendong Guo；此条保留为相关技术参考而非已确认团队论文。"
-    },
-    {
       "number": 14,
       "id": "2023-14",
       "title": "An efficient surrogate-assisted differential evolution algorithm for turbomachinery cascades optimization with more than 100 variables",
@@ -266,40 +177,6 @@
       "authorship_note": "作者列表已核对，包含 Zhendong Guo。"
     },
     {
-      "number": 16,
-      "id": "2023-16",
-      "title": "Realtime CFD Based Shape Optimization Using Geometric Deep Learning for Families of Turbomachinery Applications",
-      "doi": "10.1115/GT2023-101938",
-      "matched_title": "Realtime CFD Based Shape Optimization Using Geometric Deep Learning for Families of Turbomachinery Applications",
-      "match_score": 1.0,
-      "metadata_source": "publisher article record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "16_2023-16.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/GT/proceedings-abstract/GT2023/87110/1168606",
-      "venue": "Proceedings of the ASME Turbo Expo 2023",
-      "publication_date": "Published online September 28, 2023; GT2023-101938, V13DT34A010; 12 pages",
-      "authors": "Alexandre Gouttiere; Giacomo Alessi; Dirk Wunsch; Luca Zampieri; Charles Hirsch",
-      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo；此条保留为相关技术参考而非已确认团队论文。"
-    },
-    {
-      "number": 17,
-      "id": "2023-17",
-      "title": "Optimization of Low-Pressure Turbine Blade by Means of Fine Inspection of Loss Production Mechanisms",
-      "doi": "10.1115/1.4066818",
-      "matched_title": "Optimization of Low-Pressure Turbine Blade by Means of Fine Inspection of Loss Production Mechanisms",
-      "match_score": 1.0,
-      "metadata_source": "publisher article record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "17_2023-17.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/turbomachinery/article-abstract/147/4/041005/1207134/Optimization-of-Low-Pressure-Turbine-Blade-by",
-      "venue": "Journal of Turbomachinery",
-      "publication_date": "April 2025; 147(4): 041005; TURBO-24-1304",
-      "authors": "Matteo Russo; Andrea Carlucci; Matteo Dellacasagrande; Daniele Petronio; Davide Lengani; Daniele Simoni; Juri Bellucci; Matteo Giovannini; Angelo A. Granata; Monica Gily; Carlotta Manca",
-      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo；此条保留为相关技术参考而非已确认团队论文。"
-    },
-    {
       "number": 18,
       "id": "2022-18",
       "title": "Selecting scale factor of Bayesian multi-fidelity surrogate by minimizing posterior variance",
@@ -315,23 +192,6 @@
       "publication_date": "November 2022; 35(11): 59–73",
       "authors": "Hongyan Bu; Liming Song; Zhendong Guo; Jun Li",
       "authorship_note": "作者列表已核对，包含 Zhendong Guo。"
-    },
-    {
-      "number": 19,
-      "id": "2022-19",
-      "title": "Application of Machine Learning to Forced Response Predictions of an Industrial Axial Compressor Rotor Blade",
-      "doi": "10.1115/GT2022-82427",
-      "matched_title": "Application of Machine Learning to Forced Response Predictions of an Industrial Axial Compressor Rotor Blade",
-      "match_score": 1.0,
-      "metadata_source": "publisher article record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "19_2022-19.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/GT/proceedings-abstract/GT2022/V08AT21A019/1149138",
-      "venue": "ASME Turbo Expo 2022",
-      "publication_date": "GT2022-82427, V08AT21A019; 9 pages",
-      "authors": "Giuseppe Bruni; Senthil Krishnababu; Simon Jackson",
-      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo；保留为相关技术参考。"
     },
     {
       "number": 20,
@@ -417,23 +277,6 @@
       "publication_date": "October 2021; Volume 178, Article 121626",
       "authors": "Zhi Tao; Zhendong Guo; Boyang Yu; Liming Song; Jun Li",
       "authorship_note": "作者列表已核对，包含 Zhendong Guo。"
-    },
-    {
-      "number": 25,
-      "id": "2021-25",
-      "title": "Global Optimization of a Transonic Fan Blade Through AI-Enabled Active Subspaces",
-      "doi": "10.1115/1.4052136",
-      "matched_title": "Global Optimization of a Transonic Fan Blade Through AI-Enabled Active Subspaces",
-      "match_score": 1.0,
-      "metadata_source": "publisher article record",
-      "abstract_available": true,
-      "pdf": null,
-      "markdown": "25_2021-25.md",
-      "publisher_url": "https://asmedigitalcollection.asme.org/turbomachinery/article-abstract/144/1/011013/1115759/Global-Optimization-of-a-Transonic-Fan-Blade",
-      "venue": "Journal of Turbomachinery",
-      "publication_date": "January 2022; 144(1): 011013; published online September 21, 2021",
-      "authors": "Diego I. Lopez; Tiziano Ghisu; Shahrokh Shahpar",
-      "authorship_note": "重要核对：出版商作者未列出 Zhendong Guo；此条保留为相关技术参考而非已确认团队论文。"
     }
   ]
 }
