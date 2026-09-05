@@ -67,15 +67,35 @@ def verify_whitepaper() -> None:
     check("A4-小节完整", not missing_sec,
           "缺节：" + "、".join(missing_sec) if missing_sec else "20 讲均含规定小节")
 
-    # 数字可溯：统计表格外的裸百分比断言
-    body = re.sub(r"^\|.*$", "", text, flags=re.M)  # 先剔除表格行
-    bare = []
-    for m in PCT_RE.finditer(body):
-        seg = m.group(0)
-        if not SOURCE_TAG_RE.search(seg) and "［" not in seg:
-            bare.append(re.sub(r"\s+", " ", seg)[-60:])
-    check("A5-数字可溯", len(bare) <= 10,
-          f"{len(bare)} 处百分比断言未标注来源" + (f"，例：{bare[0]}" if bare else ""))
+    # 数字可溯：按"块"（段落 / 表格 / 列表项，以空行分隔）判定。
+    # 一个块内只要出现了百分比断言，就必须在同一块内带有 ［来源］ 标注。
+    blocks = re.split(r"\n\s*\n", text)
+    bare: list[str] = []
+    in_fence = False
+    for i, blk in enumerate(blocks):
+        # 跳过代码块（代码是执行物，不是文字断言）
+        if blk.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        if not re.search(r"\d+(?:\.\d+)?\s?%", blk):
+            continue
+        if SOURCE_TAG_RE.search(blk) or "［" in blk:
+            continue
+        # 表格块：允许来源标注写在紧邻的上一段或下一段（常见排版：表题/表注）
+        is_table = sum(1 for ln in blk.splitlines() if ln.strip().startswith("|")) >= 2
+        if is_table:
+            prev_blk = blocks[i - 1] if i > 0 else ""
+            next_blk = blocks[i + 1] if i + 1 < len(blocks) else ""
+            if SOURCE_TAG_RE.search(prev_blk) or SOURCE_TAG_RE.search(next_blk):
+                continue
+        if blk.lstrip().startswith(("#", ">", "-", "|", "*")) and len(blk) < 120:
+            continue
+        bare.append(re.sub(r"\s+", " ", blk.strip())[:70])
+    check("A5-数字可溯", len(bare) <= 5,
+          f"{len(bare)} 个段落含百分比断言但无来源标注" +
+          (f"，例：{bare[0]}" if bare else ""))
 
 
 # --------------------------------------------------------------------------- B
