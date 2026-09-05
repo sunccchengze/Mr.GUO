@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv*/
+.venv_audit/
+
+# 抽取工具运行时产物
+corpus/txt/
+corpus/index.json
+
+# 系统
+.DS_Store
+Thumbs.db
