@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+selftest_verifier.py —— 验收器的反身测试（红队自己的裁判）
+=============================================================================
+为什么需要它：`verify_all.py` 报 PASS 只说明"没触红灯"，不说明"红灯有效"。
+上一版的教训恰恰是**裁判比标准宽松**（A4 命中 4/6 即放行、A5 见到任意"［"即放行、
+E1 因 and/or 优先级把 TODO 检测短路）。因此本脚本**故意把每一类已知缺陷塞回仓库**，
+断言验收器必须变红；跑完自动还原，不留痕。
+
+用法：
+    python3 tools/selftest_verifier.py        # 逐条断言，全绿则退出码 0
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WP = os.path.join(ROOT, "燃气轮机智能设计与前沿算法自学白皮书.md")
+FACTS = os.path.join(ROOT, "corpus", "facts", "P09.md")
+README = os.path.join(ROOT, "README.md")
+SKILL_README = os.path.join(ROOT, "skills", "omni_scholar", "README.md")
+
+# (用例名, 被改文件, 搜索串, 替换串, 期望变红的检查项)
+MUTATIONS = [
+    ("A4 小节缺失", WP, "#### 2. 叶轮机械中的真实工程死穴：方案论证阶段",
+     "#### 2. 为什么值得单独做一篇", "A4"),
+    ("A5 无源百分比", WP, "\n## 6.5 全书收口",
+     "\n本方法将效率提升了 42.7%。\n\n## 6.5 全书收口", "A5"),
+    ("A6 空壳篇", WP, "## 6.1 全景对比矩阵", "## 6.1 待重建"),
+    ("F1 事实卡回退骨架", FACTS, "## 五、方法机理", "## 五、方法机理\n\n- TODO：待填写\n\n## 占位"),
+    ("D4b 错误年份回流", README, "| **15** | 2025 |",
+     "| **15** | 2024 | *IEEE Conference 2024* |"),
+    ("E3 端到端命令缺失", SKILL_README, "core.py --demo", "core.py --无此命令"),
+]
+
+
+def run_verify() -> str:
+    p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "verify_all.py")],
+                       cwd=ROOT, capture_output=True, text=True)
+    return p.stdout
+
+
+def items(output: str) -> dict[str, str]:
+    out = {}
+    for line in output.splitlines():
+        m = re.match(r"\[(PASS|FAIL)\]\s+(\S+)", line)
+        if m:
+            out[m.group(2)] = m.group(1)
+    return out
+
+
+def backup(paths) -> dict:
+    return {p: open(p, "rb").read() for p in set(paths)}
+
+
+def restore(snaps: dict) -> None:
+    for p, data in snaps.items():
+        with open(p, "wb") as f:
+            f.write(data)
+
+
+def main() -> int:
+    print("=" * 78)
+    print("验收器反身测试：故意注入缺陷，断言 verify_all.py 必须报 FAIL")
+    print("=" * 78)
+    base = items(run_verify())
+    bad0 = [k for k, v in base.items() if v != "PASS"]
+    if bad0:
+        print(f"⚠ 基线不干净，先修好这些再自测：{bad0}")
+        return 1
+    print(f"基线：{len(base)}/{len(base)} PASS\n")
+
+    snaps = backup([m[1] for m in MUTATIONS])
+    failed: list[str] = []
+    try:
+        for case in MUTATIONS:
+            name, path, needle, repl = case[0], case[1], case[2], case[3]
+            want = case[4] if len(case) > 4 else None
+            if not os.path.exists(path) or needle not in open(path, encoding="utf-8").read():
+                print(f"⚠ 跳过「{name}」：注入锚点不存在（该用例需随正文演进更新）")
+                continue
+            t = open(path, encoding="utf-8").read()
+            open(path, "w", encoding="utf-8").write(t.replace(needle, repl, 1))
+            after = items(run_verify())
+            caught = [k for k, v in after.items() if v == "FAIL"]
+            if want:
+                hit = [k for k in caught if k.startswith(want)]
+            else:  # A6：任一 FAIL 即算捕获
+                hit = caught
+            status = "✅ 捕获" if hit else "❌ 漏检"
+            print(f"  {status}  「{name}」→ {want or '任意'}  "
+                  f"（实际 FAIL 项：{', '.join(caught) or '无'}）")
+            if not hit:
+                failed.append(name)
+            restore(snaps)
+    finally:
+        restore(snaps)
+
+    print("-" * 78)
+    if failed:
+        print(f"❌ 验收器对 {len(failed)} 类缺陷无感知：{'、'.join(failed)}")
+        print("   → 说明裁判仍然太宽松，请收紧 verify_all.py 而不是放松标准。")
+        return 1
+    print(f"✅ 全部 {len(MUTATIONS)} 类缺陷均被捕获；仓库已还原。")
+    final = items(run_verify())
+    unclean = [k for k, v in final.items() if v != "PASS"]
+    print(f"   还原后复跑：{len(final) - len(unclean)}/{len(final)} PASS"
+          + (f"（残留 {unclean}）" if unclean else ""))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

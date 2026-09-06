@@ -142,6 +142,15 @@ def build_toc(lectures: dict[str, str]) -> list[str]:
         for f in sorted(os.listdir(CODE_DIR)):
             if f.endswith(".py") and not f.startswith("_"):
                 lines.append(f"  - [`{f}`](#{anchor('code-' + f)})")
+    # 第六篇与附录：过去只装配正文、不进目录，导致"写了但没人找得到"。
+    for path, title in ((PART6_PATH, "第六篇 【对比、批判与前瞻篇】"),
+                        (APPENDIX_PATH, "附录")):
+        body = read(path)
+        if not body:
+            continue
+        lines.append(f"- [{title}](#{anchor(title)})")
+        for h in re.findall(r"^##\s+(6\.\d[^\n]*)$", body, re.M):
+            lines.append(f"  - [{h.strip()}](#{anchor(h.strip())})")
     return lines
 
 
