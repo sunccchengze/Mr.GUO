@@ -68,6 +68,15 @@ MUTATIONS = [
     ("D6 规范编号缺失", PAID, "【论文 14】", "", "D6"),
     # 第四轮新增：整讲的配图引用从白皮书消失（图文件还在 images/，但该讲正文无图）——
     # C4 只按“篇”统计抓不到这种回退，必须由 C5 按讲捕获。
+    # 第五轮新增：规范 §三.3 禁止的"无量化套话"回流，必须被 A7 抓到
+    # （旧验收器只查"数字有没有标签"，对"显著/大幅"这类无出处形容词完全无感）
+    ("A7 无源套话回流", WP, "\n## 6.5 全书收口",
+     "\n本方法把端壁二次流损失显著降低。\n\n## 6.5 全书收口", "A7"),
+    # 第五轮新增：自称"逐字/verbatim"的英文摘要被改写或截断，必须被 F5 抓到
+    # （F1b 只数栏目名、D4b 只认已知错误串；"改写版冒充逐字"这类新造假两者都放行）
+    ("F5 逐字摘要被篡改", FACT01,
+     "has been widely used to guide the Bayesian optimization (BO).",
+     "has been broadly adopted to steer the Bayesian optimization process (BO).", "F5"),
     ("C5 某讲配图整体消失", WP,
      "![TNO 全景预测：架构与单次评估代价（TNO panoramic prediction，中文标注版）](./images/tno_panoramic_prediction_zh.png)",
      "", "C5"),

@@ -122,6 +122,12 @@ def normalize(text: str) -> str:
     """统一全角/半角与空白，便于后续正则检索。"""
     text = unicodedata.normalize("NFKC", text)
     text = text.replace("\u00ad", "")           # 软连字符
+    # pypdf 对字体内未映射的字形会吐出 "/u1D70E" 这类转义（多见于数学斜体希腊字母 σ/ξ/x）。
+    # 若不还原，语料里就成了 "…uncertainty /u1D70E(/u1D431)…"，导致
+    # ① 逐字摘要无法与语料比对；② 全文检索按 σ 检索必然落空。
+    text = re.sub(r"/u([0-9A-Fa-f]{4,6})",
+                  lambda m: chr(int(m.group(1), 16)) if int(m.group(1), 16) <= 0x10FFFF else m.group(0),
+                  text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text

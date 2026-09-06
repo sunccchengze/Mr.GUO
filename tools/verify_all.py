@@ -19,6 +19,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WHITEPAPER = os.path.join(ROOT, "燃气轮机智能设计与前沿算法自学白皮书.md")
@@ -639,6 +640,124 @@ def verify_hygiene() -> None:
 
 
 
+def _norm_en(s: str) -> str:
+    """把英文文本压成\"可比对形态\"：去连字符换行、去所有非字母数字符号、转小写。
+
+    PDF 抽取会把单词按行断开（``popu-\\nlation``）、把引号换成弯引号、把空格塞进公式，
+    逐字比对必须先抹平这些**排版噪声**，否则会把\"真逐字\"误判为\"不逐字\"。
+    """
+    s = unicodedata.normalize("NFKC", s)
+    # 抽取器按页插入的 "===== [PAGE 11] =====" 分隔符常常落在句子中间，
+    # 逐字比对前必须先剔除（它不是论文正文的一部分）。
+    s = re.sub(r"=====\s*\[PAGE[^\]]*\]\s*=====", " ", s)
+    s = re.sub(r"-\s+", "", s)
+    # 变音/上标符号在 PDF 里可能是「组合字符」(y + U+0302)，在文档里却是「预组合字符」(ŷ)。
+    # 先 NFKD 拆开再丢弃组合记号，两种写法才能归一（否则 ŷ 整字被剔除、ŷ 的 y 却保留）。
+    s = "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+    return re.sub(r"[^A-Za-z0-9%.]", "", s).lower()
+
+
+def _verbatim_hit(sent: str, blob: str) -> bool:
+    """句子是否逐字出自语料。
+
+    PDF 正文常被**页眉页脚、脚注、通信作者邮箱**从句子中间劈开
+    （例如 P12 摘要的一句里插进了 "∗The first corresponding author / Email addresses: …"）。
+    这属于版面噪声而非文本不符，因此整句匹配失败时，退而验证**句首与句尾两段**都能命中。
+    """
+    n = _norm_en(sent)
+    if n in blob:
+        return True
+    return len(n) > 120 and n[:60] in blob and n[-60:] in blob
+
+
+def _corpus_blob() -> str:
+    """全部可回溯来源（本地抽取正文 + 网络证据卡）拼成一条大字符串。"""
+    parts = []
+    for pat in ("txt/*.txt", "web_evidence/*.md"):
+        for p in glob.glob(os.path.join(CORPUS, pat)):
+            parts.append(_norm_en(open(p, encoding="utf-8", errors="ignore").read()))
+    return " ".join(parts)
+
+
+# 规范 §三.3 明令禁止的\"无量化、无出处套话\"。
+# 白名单：这些词在统计学/标题语境下是**术语或反例**，不属违规
+#   - \"显著性\"（statistical significance）、\"显著变量\"（SHAP 归因结论）
+#   - 讲义中\"优化到完美/图纸上完美\"是**引子里的反问**，本身即在论证\"做不到完美\"
+BANNED_ADJ = ("显著", "大幅", "极大地", "完美", "全面超越", "遥遥领先", "革命性")
+ADJ_WHITELIST = ("显著性", "显著变量", "最显著", "显著水平",
+                 "优化到完美", "图纸上完美", "几何做得完美")
+
+
+def verify_prose() -> None:
+    """A7/F5：验收器长期只查\"数字有没有标签\"，从不查\"形容词有没有出处\"与\"逐字是不是真逐字\"。"""
+    # ---- A7：无量化形容词必须带来源标注（规范 §三.3）
+    offend = []
+    files = sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md")))
+    files += [os.path.join(ROOT, "docs", f) for f in ("part6.md", "chapter0.md", "front_matter.md")]
+    # 白皮书虽是派生物，仍须单独扫：否则有人直接改白皮书注入套话时，
+    # 只有 F4（源一致）会红，A7 本身却毫无感知——反身测试正是这样抓到该盲区的。
+    files.append(WHITEPAPER)
+    for f in files:
+        if not os.path.exists(f):
+            continue
+        in_code = False
+        for ln, line in enumerate(open(f, encoding="utf-8").read().split("\n"), 1):
+            if line.lstrip().startswith("```"):
+                in_code = not in_code
+                continue
+            if in_code:
+                continue  # 代码块内的断言消息/注释不是面向读者的论述，不适用文风规范
+            for adj in BANNED_ADJ:
+                for m in re.finditer(re.escape(adj), line):
+                    ctx = line[max(0, m.start() - 4): m.end() + 4]
+                    if any(w in ctx for w in ADJ_WHITELIST):
+                        continue
+                    st = max(line.rfind("。", 0, m.start()), line.rfind("|", 0, m.start())) + 1
+                    en = line.find("。", m.end())
+                    sent = line[st: en if en > 0 else len(line)]
+                    if not CITED_RE.search(sent) and "原文" not in sent and "本讲" not in sent:
+                        offend.append(f"{os.path.basename(f)}:{ln}「{adj}」")
+    check("A7-无源形容词", not offend,
+          f"{len(offend)} 处无量化、无出处的套话：" + "、".join(offend[:5])
+          if offend else "禁用套话均带出处或已量化改写")
+
+    # ---- F5：凡自称\"逐字/verbatim\"的英文摘要，必须真能在语料里逐字命中
+    blob = _corpus_blob()
+    if not blob:
+        check("F5-逐字摘要属实", False, "corpus/txt 为空：请先 `make corpus` 再验收")
+        return
+    bad = []
+    targets = sorted(glob.glob(os.path.join(CORPUS, "facts", "P*.md")))
+    targets.append(os.path.join(ROOT, "郭老师论文全集综合整理汇总.md"))
+    for f in targets:
+        if not os.path.exists(f):
+            continue
+        lines = open(f, encoding="utf-8").read().split("\n")
+        for i, line in enumerate(lines):
+            if not re.search(r"(逐字|verbatim)", line):
+                continue
+            blk = []
+            for j in range(i + 1, min(i + 40, len(lines))):
+                t = lines[j].strip()
+                if t.startswith(">"):
+                    blk.append(t[1:])
+                elif blk:
+                    break
+            eng = re.sub(r"[\u4e00-\u9fff].*", "", " ".join(blk))
+            if len(re.findall(r"[A-Za-z]", eng)) < 200:
+                continue
+            if "…" in eng or "..." in eng:
+                bad.append(f"{os.path.basename(f)}:{i+1} 自称逐字却用省略号截断")
+                continue
+            for sent in re.split(r"(?<=\.)\s", eng):
+                if len(re.findall(r"[A-Za-z]", sent)) > 40 and not _verbatim_hit(sent, blob):
+                    bad.append(f"{os.path.basename(f)}:{i+1}「{sent.strip()[:48]}…」")
+                    break
+    check("F5-逐字摘要属实", not bad,
+          f"{len(bad)} 处自称逐字却与语料对不上：" + "；".join(bad[:3])
+          if bad else "所有自称 verbatim 的英文摘要均逐字命中 corpus")
+
+
 def main() -> int:
     verify_whitepaper()
     verify_code()
@@ -646,6 +765,7 @@ def main() -> int:
     verify_consistency()
     verify_skills()
     verify_hygiene()
+    verify_prose()
 
     if "--json" in sys.argv:
         print(json.dumps([{"item": c, "pass": ok, "detail": d} for c, ok, d in results],
