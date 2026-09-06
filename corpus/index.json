@@ -165,7 +165,7 @@
       "year_hint": "2023",
       "title_hint": "lation regeneration process, which helps to enhance the local exploitation in each iteration and thus achieving a",
       "has_fulltext": true,
-      "chars": 44680,
+      "chars": 44665,
       "txt": "corpus/txt/P07_1-s2.0-S1270963823005710-main.txt",
       "numeric_claims": [
         "evaluations, the total-to-total efficiency is increased by 1.104%. In contrast, classic DE algorithm achieves a",
@@ -350,7 +350,7 @@
       "year_hint": "2025",
       "title_hint": "Fig. 1. The architecture of AI-assisted fluid-structure modeling and optimization of PJP, where(a-d) CFD and (e-g) fluid-structure interaction (FSI) of PJP",
       "has_fulltext": true,
-      "chars": 36239,
+      "chars": 36238,
       "txt": "corpus/txt/P15_AI-Assisted_Fluid-Structure_Modeling_and.txt",
       "numeric_claims": [
         "Chord Length at 70% dr (cr) 24% dr",
@@ -429,7 +429,7 @@
       "year_hint": "2026",
       "title_hint": "1270-9638/© 2026 Elsevier Masson SAS. All rights are reserved, including those for text and data mining, AI training, and similar technologies.",
       "has_fulltext": true,
-      "chars": 82683,
+      "chars": 82659,
       "txt": "corpus/txt/P18_1-s2.0-S1270963826007315-main.txt",
       "numeric_claims": [
         "structures with high accuracy, achieving a Mean Relative Error (MRE) of 1.16% for flow fields and a Mean",

@@ -155,12 +155,13 @@ def verify_whitepaper() -> None:
           "缺节：" + "、".join(missing_sec) if missing_sec else "20 讲均含规定小节")
 
     # 数字可溯：按"块"（段落 / 表格 / 列表项，以空行分隔）判定。
-    # 一个块内只要出现了百分比/倍数断言，就必须在同一块内带有可回溯的引用标注。
+    # 一个块内只要出现了百分比/倍数/次数断言，就必须在同一块内带有可回溯的引用标注。
     # 严格之处：① 不接受"块里有 ［"这种形式合规；② 不允许任何配额（旧版容忍 5 处）；
     #          ③ 标题/引注/短句不豁免（旧版 len(blk)<120 直接跳过，是后门）；
-    #          ④ 规范原文是“百分比/倍数/CFD次数”，旧检查只查了百分比，本轮补上倍数。
+    #          ④ 规范原文是"百分比/倍数/CFD次数"，次轮补了倍数，第十三轮补次数。
     blocks = re.split(r"\n\s*\n", text)
     bare: list[str] = []
+    flagged: set[int] = set()
     in_fence = False
     for i, blk in enumerate(blocks):
         # 跳过代码块（代码是执行物，不是文字断言）
@@ -180,10 +181,34 @@ def verify_whitepaper() -> None:
             next_blk = blocks[i + 1] if i + 1 < len(blocks) else ""
             if CITED_RE.search(prev_blk) or CITED_RE.search(next_blk):
                 continue
+        flagged.add(i)
+        bare.append(re.sub(r"\s+", " ", blk.strip())[:70])
+    # 次数断言（规范 §三.1 的"CFD 次数"）：第十三轮补上。旧版 A5 的注释引用了该规范，
+    # 但正则只写了 %|倍——"1500 次 CFD"这类断言可以裸奔。辟谣/史实块（6.4 式"旧版数字公示"）
+    # 与百分比项的 D4b 豁免同理：块内明说"无出处/删除/旧版"者不重复报。
+    COUNT_RE = re.compile(r"\d[\d,]*\s*次\s*(?:CFD|N-S|RANS|数值模拟|数值仿真|仿真|评估|求解|模拟|计算)")
+    DEBUNK = ("旧版", "无出处", "删除", "🗑️", "辟谣", "已更正")
+    in_fence = False
+    for i, blk in enumerate(blocks):
+        if blk.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or i in flagged:
+            continue
+        if not COUNT_RE.search(blk):
+            continue
+        if CITED_RE.search(blk) or any(k in blk for k in DEBUNK):
+            continue
+        is_table = sum(1 for ln in blk.splitlines() if ln.strip().startswith("|")) >= 2
+        if is_table:
+            prev_blk = blocks[i - 1] if i > 0 else ""
+            next_blk = blocks[i + 1] if i + 1 < len(blocks) else ""
+            if CITED_RE.search(prev_blk) or CITED_RE.search(next_blk):
+                continue
         bare.append(re.sub(r"\s+", " ", blk.strip())[:70])
     check("A5-数字可溯", not bare,
-          (f"{len(bare)} 个段落含百分比断言但无可回溯的来源标注，例：{' / '.join(bare[:3])}"
-           if bare else "含百分比断言的段落全部带来源标注"))
+          (f"{len(bare)} 个段落含百分比/倍数/次数断言但无可回溯的来源标注，例：{' / '.join(bare[:3])}"
+           if bare else "含百分比/倍数/次数断言的段落全部带来源标注"))
 
     # A6：篇级完整性——第六篇（对比、批判与前瞻）不得为空壳。
     m6 = re.search(r"^# 第六篇.*$", text, re.M)
@@ -843,6 +868,50 @@ def verify_rigor() -> None:
     check("A9-公式结构", not broken,
           f"{len(broken)} 处 LaTeX 结构损坏：" + "；".join(broken[:4])
           if broken else "全部讲义 $$/$ 成对、公式花括号平衡")
+
+    # ---- D8：五份根索引文档的数字可溯（第十三轮补）。A5 只扫白皮书与讲义，
+    # README/全集/公开/付费/链接里的 14.0%、0.42% 类断言长期无裁判——
+    # "改了正文忘了改索引"正是第 3 轮"索引没跟上"事故的变体。
+    # 判据与 A5 同源；额外豁免：① 块内含"见事实卡/见上引"指针；② 逐字英文摘要
+    # 引文块（以 > 开头）；③ 旧版公示/辟谣块。
+    idx_files = [README,
+                 os.path.join(ROOT, "郭老师论文全集综合整理汇总.md"),
+                 os.path.join(ROOT, "公开论文整理.md"),
+                 os.path.join(ROOT, "付费论文五篇整理.md"),
+                 os.path.join(ROOT, "论文链接整理.md")]
+    # "事实卡 PXX"是这些文档里的合法溯源指针（唯一事实底座）；"摘要中译"标明转译来源。
+    POINTER = re.compile(r"事实卡\s*P\d|见上引|摘要中译")
+    idx_bad = []
+    for f in idx_files:
+        if not os.path.exists(f):
+            continue
+        body = strip_code(open(f, encoding="utf-8").read())
+        blocks = re.split(r"\n\s*\n", body)
+        for i, blk in enumerate(blocks):
+            if not re.search(r"\d+(?:\.\d+)?\s?(?:%|倍)|\d[\d,]*\s*次\s*(?:CFD|评估|仿真|求解|模拟|计算)", blk):
+                continue
+            first = blk.strip().split("\n", 1)[0].lstrip()
+            if first.startswith("#") or first.startswith(">") or first.startswith("|---") :
+                continue
+            # 摘要引文惯例：这些文档正文为中文，"### Abstract" 标题下的纯英文段
+            # 即出版商摘要逐字引用，数字自带出处（上引规则的同族情形）。
+            if not re.search(r"[\u4e00-\u9fff]", blk):
+                continue
+            if CITED_RE.search(blk) or POINTER.search(blk):
+                continue
+            if any(k in blk for k in ("旧版", "无出处", "删除", "🗑️", "辟谣", "已更正", "待核实")):
+                continue
+            is_table = sum(1 for ln in blk.splitlines() if ln.strip().startswith("|")) >= 2
+            if is_table:
+                prev_blk = blocks[i - 1] if i > 0 else ""
+                next_blk = blocks[i + 1] if i + 1 < len(blocks) else ""
+                if CITED_RE.search(prev_blk) or CITED_RE.search(next_blk) \
+                   or POINTER.search(prev_blk) or POINTER.search(next_blk):
+                    continue
+            idx_bad.append(f"{os.path.basename(f)}:{re.sub(chr(10), ' ', blk.strip())[:60]}")
+    check("D8-索引数字可溯", not idx_bad,
+          (f"{len(idx_bad)} 处索引文档百分比/倍数/次数断言无出处，例：{' / '.join(idx_bad[:3])}"
+           if idx_bad else "五份索引文档的量化断言全部带出处或可回溯指针"))
 
 
 def verify_prose() -> None:
