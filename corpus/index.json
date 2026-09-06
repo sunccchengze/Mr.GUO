@@ -13,9 +13,9 @@
       "curated_venue": "Structural and Multidisciplinary Optimization",
       "journal_hint": "Structural and Multidisciplinary Optimization",
       "year_hint": "2021",
-      "title_hint": "Expected improvement (EI), a function of prediction uncertainty /u1D70E(/u1D431)and improvement quantity (ξ − ̂y(/u1D431)) , has been widely",
+      "title_hint": "and recalibrated EI (REI), which combine the calibrated incumbent /u1D709Calibrated with distance constraint to enhance the local",
       "has_fulltext": true,
-      "chars": 72428,
+      "chars": 69830,
       "txt": "corpus/txt/P01_s00158-021-03038-3.txt",
       "numeric_claims": [
         "of an algorithm is defined as (ymin − fmin)∕fmin < 1% , where"

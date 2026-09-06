@@ -1,0 +1,164 @@
+diff --git a/images/L01_cei_rei_shifts_zh.png b/images/L01_cei_rei_shifts_zh.png
+new file mode 100644
+index 0000000..ccc0a10
+Binary files /dev/null and b/images/L01_cei_rei_shifts_zh.png differ
+diff --git a/images/L01_cfd_cost_overexplore_zh.png b/images/L01_cfd_cost_overexplore_zh.png
+new file mode 100644
+index 0000000..e43b7d6
+Binary files /dev/null and b/images/L01_cfd_cost_overexplore_zh.png differ
+diff --git a/images/L01_ei_derivation_story_zh.png b/images/L01_ei_derivation_story_zh.png
+new file mode 100644
+index 0000000..41115ec
+Binary files /dev/null and b/images/L01_ei_derivation_story_zh.png differ
+diff --git a/images/L01_noodle_shop_gp_zh.png b/images/L01_noodle_shop_gp_zh.png
+new file mode 100644
+index 0000000..534577a
+Binary files /dev/null and b/images/L01_noodle_shop_gp_zh.png differ
+diff --git a/images/L01_s2_expensive_blackbox_zh.png b/images/L01_s2_expensive_blackbox_zh.png
+new file mode 100644
+index 0000000..ecafaec
+Binary files /dev/null and b/images/L01_s2_expensive_blackbox_zh.png differ
+diff --git a/images/L01_s3_z_two_diseases_zh.png b/images/L01_s3_z_two_diseases_zh.png
+new file mode 100644
+index 0000000..d128b11
+Binary files /dev/null and b/images/L01_s3_z_two_diseases_zh.png differ
+diff --git a/images/L01_s4_cei_rei_roster_zh.png b/images/L01_s4_cei_rei_roster_zh.png
+new file mode 100644
+index 0000000..9954883
+Binary files /dev/null and b/images/L01_s4_cei_rei_roster_zh.png differ
+diff --git a/images/L02_cluster_idle_hf_lf_zh.png b/images/L02_cluster_idle_hf_lf_zh.png
+new file mode 100644
+index 0000000..d620f18
+Binary files /dev/null and b/images/L02_cluster_idle_hf_lf_zh.png differ
+diff --git a/images/L02_gatekeeper_threshold_zh.png b/images/L02_gatekeeper_threshold_zh.png
+new file mode 100644
+index 0000000..0a7a888
+Binary files /dev/null and b/images/L02_gatekeeper_threshold_zh.png differ
+diff --git a/images/L02_s2_idle_cluster_zh.png b/images/L02_s2_idle_cluster_zh.png
+new file mode 100644
+index 0000000..eadf98b
+Binary files /dev/null and b/images/L02_s2_idle_cluster_zh.png differ
+diff --git a/images/L02_s3_filter_threshold_zh.png b/images/L02_s3_filter_threshold_zh.png
+new file mode 100644
+index 0000000..022cfe9
+Binary files /dev/null and b/images/L02_s3_filter_threshold_zh.png differ
+diff --git a/images/L03_compressor_126dim_zh.png b/images/L03_compressor_126dim_zh.png
+new file mode 100644
+index 0000000..150acad
+Binary files /dev/null and b/images/L03_compressor_126dim_zh.png differ
+diff --git a/images/L03_gsde_assembly_line_zh.png b/images/L03_gsde_assembly_line_zh.png
+new file mode 100644
+index 0000000..b41983b
+Binary files /dev/null and b/images/L03_gsde_assembly_line_zh.png differ
+diff --git a/images/L03_kriging_blind_high_dim_zh.png b/images/L03_kriging_blind_high_dim_zh.png
+new file mode 100644
+index 0000000..d6f9c6e
+Binary files /dev/null and b/images/L03_kriging_blind_high_dim_zh.png differ
+diff --git a/images/L03_s2_kriging_blind_zh.png b/images/L03_s2_kriging_blind_zh.png
+new file mode 100644
+index 0000000..2ed0939
+Binary files /dev/null and b/images/L03_s2_kriging_blind_zh.png differ
+diff --git a/images/L03_s4_gsde_factory_line_zh.png b/images/L03_s4_gsde_factory_line_zh.png
+new file mode 100644
+index 0000000..74ce80f
+Binary files /dev/null and b/images/L03_s4_gsde_factory_line_zh.png differ
+diff --git a/images/L04_da_ego_cycle_zh.png b/images/L04_da_ego_cycle_zh.png
+new file mode 100644
+index 0000000..a8d2171
+Binary files /dev/null and b/images/L04_da_ego_cycle_zh.png differ
+diff --git a/images/L04_rotor37_28vars_zh.png b/images/L04_rotor37_28vars_zh.png
+new file mode 100644
+index 0000000..001657b
+Binary files /dev/null and b/images/L04_rotor37_28vars_zh.png differ
+diff --git a/images/L04_s2_rotor37_divide_zh.png b/images/L04_s2_rotor37_divide_zh.png
+new file mode 100644
+index 0000000..0cecc83
+Binary files /dev/null and b/images/L04_s2_rotor37_divide_zh.png differ
+diff --git a/images/L04_s3_da_ego_loop_zh.png b/images/L04_s3_da_ego_loop_zh.png
+new file mode 100644
+index 0000000..2284ffe
+Binary files /dev/null and b/images/L04_s3_da_ego_loop_zh.png differ
+diff --git a/images/L04_s5_rotor37_scoreboard_zh.png b/images/L04_s5_rotor37_scoreboard_zh.png
+new file mode 100644
+index 0000000..5ae3607
+Binary files /dev/null and b/images/L04_s5_rotor37_scoreboard_zh.png differ
+diff --git a/images/L04_two_compressor_cases_zh.png b/images/L04_two_compressor_cases_zh.png
+new file mode 100644
+index 0000000..2b4d873
+Binary files /dev/null and b/images/L04_two_compressor_cases_zh.png differ
+diff --git a/images/L05_dbscan_emfs_pipeline_zh.png b/images/L05_dbscan_emfs_pipeline_zh.png
+new file mode 100644
+index 0000000..e0ccf29
+Binary files /dev/null and b/images/L05_dbscan_emfs_pipeline_zh.png differ
+diff --git a/images/L05_intern_trap_convergence_zh.png b/images/L05_intern_trap_convergence_zh.png
+new file mode 100644
+index 0000000..cb85625
+Binary files /dev/null and b/images/L05_intern_trap_convergence_zh.png differ
+diff --git a/images/L05_s2_mfs_trap_zh.png b/images/L05_s2_mfs_trap_zh.png
+new file mode 100644
+index 0000000..fc65758
+Binary files /dev/null and b/images/L05_s2_mfs_trap_zh.png differ
+diff --git a/images/L05_s3_emfs_pipeline_zh.png b/images/L05_s3_emfs_pipeline_zh.png
+new file mode 100644
+index 0000000..c6223e3
+Binary files /dev/null and b/images/L05_s3_emfs_pipeline_zh.png differ
+diff --git a/images/L06_latent_dim_dilemma_zh.png b/images/L06_latent_dim_dilemma_zh.png
+new file mode 100644
+index 0000000..63cd265
+Binary files /dev/null and b/images/L06_latent_dim_dilemma_zh.png differ
+diff --git a/images/L06_s2_latent_dim_dilemma_zh.png b/images/L06_s2_latent_dim_dilemma_zh.png
+new file mode 100644
+index 0000000..62db9e2
+Binary files /dev/null and b/images/L06_s2_latent_dim_dilemma_zh.png differ
+diff --git a/images/L06_s3_gmfoo_two_latents_zh.png b/images/L06_s3_gmfoo_two_latents_zh.png
+new file mode 100644
+index 0000000..383c6f9
+Binary files /dev/null and b/images/L06_s3_gmfoo_two_latents_zh.png differ
+diff --git a/images/L07_s2_blade_120_to_100_zh.png b/images/L07_s2_blade_120_to_100_zh.png
+new file mode 100644
+index 0000000..e08f123
+Binary files /dev/null and b/images/L07_s2_blade_120_to_100_zh.png differ
+diff --git a/images/L07_s3_swvae_weighting_zh.png b/images/L07_s3_swvae_weighting_zh.png
+new file mode 100644
+index 0000000..15c310c
+Binary files /dev/null and b/images/L07_s3_swvae_weighting_zh.png differ
+diff --git a/images/L08_s2_blueprint_points_only_zh.png b/images/L08_s2_blueprint_points_only_zh.png
+new file mode 100644
+index 0000000..d6dade6
+Binary files /dev/null and b/images/L08_s2_blueprint_points_only_zh.png differ
+diff --git a/images/L08_s3_gradient_reparam_zh.png b/images/L08_s3_gradient_reparam_zh.png
+new file mode 100644
+index 0000000..a17592d
+Binary files /dev/null and b/images/L08_s3_gradient_reparam_zh.png differ
+diff --git a/images/L09_s2_endwall_harder_zh.png b/images/L09_s2_endwall_harder_zh.png
+new file mode 100644
+index 0000000..a9d51c2
+Binary files /dev/null and b/images/L09_s2_endwall_harder_zh.png differ
+diff --git a/images/L09_s3_vae_nurbs_layer_zh.png b/images/L09_s3_vae_nurbs_layer_zh.png
+new file mode 100644
+index 0000000..efc53c5
+Binary files /dev/null and b/images/L09_s3_vae_nurbs_layer_zh.png differ
+diff --git a/images/L10_s2_one_model_per_metric_zh.png b/images/L10_s2_one_model_per_metric_zh.png
+new file mode 100644
+index 0000000..3ec5b3f
+Binary files /dev/null and b/images/L10_s2_one_model_per_metric_zh.png differ
+diff --git a/images/L10_s3_tno_two_stage_cost_zh.png b/images/L10_s3_tno_two_stage_cost_zh.png
+new file mode 100644
+index 0000000..bc79d4d
+Binary files /dev/null and b/images/L10_s3_tno_two_stage_cost_zh.png differ
+diff --git a/images/L11_s2_film_cooling_render_zh.png b/images/L11_s2_film_cooling_render_zh.png
+new file mode 100644
+index 0000000..de2bb34
+Binary files /dev/null and b/images/L11_s2_film_cooling_render_zh.png differ
+diff --git a/images/L11_s3_superposition_net_zh.png b/images/L11_s3_superposition_net_zh.png
+new file mode 100644
+index 0000000..e4ef403
+Binary files /dev/null and b/images/L11_s3_superposition_net_zh.png differ
+diff --git a/images/L12_s2_condition_change_breaks_zh.png b/images/L12_s2_condition_change_breaks_zh.png
+new file mode 100644
+index 0000000..299aabd
+Binary files /dev/null and b/images/L12_s2_condition_change_breaks_zh.png differ
+diff --git a/images/L16_endwall_vortex_render_zh.png b/images/L16_endwall_vortex_render_zh.png
+new file mode 100644
+index 0000000..bbc233d
+Binary files /dev/null and b/images/L16_endwall_vortex_render_zh.png differ
