@@ -1,126 +1,135 @@
-# 🧠 OMNI-SCHOLAR: 全维学术认知与科研超脑引擎 (Master Agent Skill)
+# 🔎 omni_scholar：文献检索与核验技能包（真实实现版）
 
-> **Skill ID:** `omni-scholar-core`  
-> **适用环境:** Claude Code / Cursor / Codex / AutoGPT / OpenClaw / 任意通用 LLM Coding Agent  
-> **版本:** v2.0 (Academic Master Edition)  
-> **作者/维护方:** Mr.GUO 科研平台  
-> **核心融合体系:** 深度吸收并融合 GitHub 顶级科研四大开源架构：
-> - 👑 **`gpt_academic`** (71.3k ⭐): 公式/图表/代码 AST 高保真解析、插件化科研执行流
-> - 🏛️ **`STORM`** (30.9k ⭐): 斯坦福多专家对抗角色扮演、前置知识大纲综合、全局溯源引用
-> - ⚡ **`ChatPaper`** (19.8k ⭐): 四维科研骨架深度逆向、方法论算法级提炼
-> - 🎯 **`PaperQA2`** (9.1k ⭐): 超人级科学 RAG、上下文重排(RCS)、跨文献矛盾与证据链检测
+> **Skill ID:** `omni-scholar-core`
+> **适用环境:** 任意可执行 Python 的 Agent（Claude Code / Cursor / Codex / 自研 Agent）
+> **版本:** v3.0（真实实现；v2.0 及以前为占位壳子，见下方「旧版问题」）
+> **依赖:** 仅 Python 标准库（复用 `tools/extract_corpus.py`，不需要额外安装包）
 
 ---
 
-## 📖 技能定位与核心价值
+## 一、这个技能到底是什么
 
-`omni-scholar` 是专门为**理工科前沿论文精读、高难度理论重推、跨文献演进拓扑合成、批判性审稿与算法代码逆向工程**设计的超级 Agent 技能包。
+它是一个**基于本仓库 `corpus/` 语料的文献检索与核验工具**，不是"论文解读生成器"。
 
-当其他 Agent 面对复杂的学术论文时，调用此 Skill 可以杜绝泛泛而谈的废话摘要，直击论文的**数学内核、物理机理、算法实现与潜在缺陷**。
+遵守与白皮书完全相同的铁律：
 
----
+> **没有出处的话不输出。**
+> 每一条论断都附带 `(语料文件, 字符区间, 原文片段)`，可以直接回溯到
+> `corpus/txt/` 里的原文字符。**检索不到就明确说"未检索到"，绝不代以模板套话。**
 
-## 🛠️ 六步标准化执行流水线 (Execution Pipeline)
+### 旧版问题（v2.0 及以前）
 
-任何 Agent 在接收到科研论文分析任务时，应严格遵循以下 6 步流水线顺序执行：
-
-```
-                    ┌─────────────────────────────────────────┐
-                    │      STEP 1: 数学与物理公式无损解析      │
-                    │ (提取控制方程、核函数、损失函数与网络层)  │
-                    └────────────────────┬────────────────────┘
-                                         │
-                    ┌────────────────────▼────────────────────┐
-                    │     STEP 2: 四维科学骨架深度逆向重构    │
-                    │ (核心痛点 ➔ SOTA失效 ➔ 本文方法 ➔ 实验验证) │
-                    └────────────────────┬────────────────────┘
-                                         │
-                    ┌────────────────────▼────────────────────┐
-                    │   STEP 3: 斯坦福多智能体对抗审查辩论    │
-                    │ (算法理论家、流体物理学家、审稿人对抗质询)│
-                    └────────────────────┬────────────────────┘
-                                         │
-                    ┌────────────────────▼────────────────────┐
-                    │     STEP 4: 跨文献演进拓扑与矛盾检测    │
-                    │ (梳理代际演进主线，定位技术突破与假设冲突)│
-                    └────────────────────┬────────────────────┘
-                                         │
-                    ┌────────────────────▼────────────────────┐
-                    │     STEP 5: 工业级 Python 原型代码生成   │
-                    │ (将数学公式/算子逆向输出为无依赖纯Python) │
-                    └────────────────────┬────────────────────┘
-                                         │
-                    ┌────────────────────▼────────────────────┐
-                    │      STEP 6: 第一性原理自学化教学输出    │
-                    │ (用初高中物理数学作为阶梯，由浅入深输出)  │
-                    └─────────────────────────────────────────┘
-```
+旧版 `core.py` 每个方法都返回一段写死的漂亮话（例如"从数学收敛性、计算复杂度和隐空间
+流形保形性进行审查"），`generate_reproducible_code_blueprint()` 返回一段写死的占位字符串。
+它**不读取任何语料、不输出任何可回溯证据**——看着像在深度分析，实际什么都没做。
+本版已彻底重写，并移除了"代码蓝图生成"这一能力：**生成没有语料支撑的代码不属于本技能的职责**，
+真正可运行的代码在 `code/` 目录下（见 `code/README.md`）。
 
 ---
 
-## 📝 标准 Prompt 模板 (Agent 可直接注入)
+## 二、五项能力
 
-```markdown
-[ROLE DEFINITION]
-You are now activating the "Omni-Scholar Master Research Skill". You are a distinguished professor and lead scientist in computational engineering and scientific machine learning (AI for Science).
+| 能力 | 方法 | 输出 |
+| :--- | :--- | :--- |
+| ① 元数据与 DOI 核验 | `verify_doi(pid)` | 声明值 / 核验值 / 正文嗅探值三方比对，状态为 `一致` / `冲突` / `未核验` / `仅核验值` |
+| ② 四维骨架抽取 | `extract_skeleton(pid)` | 痛点 / 前人失效 / 本文方法 / 量化验证，每维最多 3 条带字符区间的原文证据 |
+| ③ 跨文献演进拓扑 | `build_evolution_topology()` | 按真实年份排代、方法关键词共现矩阵（Top 15） |
+| ④ 跨文献互证与批评 | `detect_cross_paper_links()` | 在 A 篇正文中命中 B 篇方法名的位置，并判断是否含批评性措辞 |
+| ⑤ 事实卡生成 | `generate_fact_card(pid)` | Markdown 事实卡：元数据 + DOI 核验 + 量化断言池 + 四维骨架 |
 
-[ANALYTICAL PROTOCOL]
-When analyzing the provided paper(s), you MUST execute the following 5 dimensions with zero omissions:
+辅助：`grep(keyword)` 在全部语料中检索关键词，返回带字符位置的命中。
 
-1. CORE MATHEMATICAL & PHYSICAL DECONSTRUCTION:
-   - What is the exact physical governing equation or mathematical optimization formulation?
-   - What is the structural failure mode of prior SOTA methods (e.g. over-exploration, curse of dimensionality, negative transfer)?
-   - Provide exact LaTeX formulations for key algorithms/loss functions/acquisition functions.
+### 与 `tools/extract_corpus.py` 的关系
 
-2. MULTI-PERSPECTIVE ADVERSARIAL CRITIQUE:
-   - Simulate an "Algorithm Theorist" evaluating mathematical convergence and latent manifold convexity.
-   - Simulate a "Fluid Aerothermal Physicist" evaluating secondary vortex dynamics and Navier-Stokes fidelity.
-   - Simulate a "Critical Reviewer" identifying hidden assumptions, overfitting risks, and out-of-distribution failure cases.
+本技能**直接复用**抽取器的 `normalize` / `DOI_RE` / `mine_numeric_claims` /
+`sniff_metadata`，不另写一套正则，避免两处口径漂移。
 
-3. CROSS-PAPER EVOLUTIONARY SYNTHESIS:
-   - Place this work in the broader research roadmap (Phase 1 Bayesian Opt -> Phase 2 High-Dim DE -> Phase 3 Generative Transfer -> Phase 4 Neural Operators).
-   - Detail the quantitative performance Pareto frontiers against standard baselines.
+---
 
-4. REPRODUCIBLE CODE BLUEPRINT:
-   - Provide clean, self-contained Python / NumPy / PyTorch prototypes implementing the core algorithmic kernel.
+## 三、命令行用法（仓库根目录执行）
 
-5. PEDAGOGICAL FIRST-PRINCIPLES EXPLANATION:
-   - Explain the core intuitions using foundational physics (Newton's laws, pressure gradients, conservation laws, probability distributions) so that an early undergraduate student can fully grasp the breakthrough.
+```bash
+python skills/omni_scholar/core.py --demo              # 端到端演示
+python skills/omni_scholar/core.py --verify-doi 06     # 核验单篇 DOI
+python skills/omni_scholar/core.py --skeleton 07       # 抽取四维骨架
+python skills/omni_scholar/core.py --topology          # 跨文献演进拓扑
+python skills/omni_scholar/core.py --links             # 跨文献互证 / 批评关系
+python skills/omni_scholar/core.py --fact-card 09      # 生成事实卡
+python skills/omni_scholar/core.py --grep "negative transfer"
+python skills/omni_scholar/core.py --skeleton 07 --json   # 任意命令可加 --json
 ```
 
 ---
 
-## 💻 快速调用示例 (Python SDK)
+## 四、真实输出节选（`--demo`，2026 年重建后实测）
+
+```
+【1】语料概览
+  - 论文数：20；编号：01, 02, ..., 20
+  - 有全文：13 篇
+
+【2】DOI 核验（逐篇三方比对）
+  OK P06 [一致]: 声明=10.1109/TCYB.2022.3165044 | 核验=10.1109/TCYB.2022.3165044 | 正文=...3165044
+  ?! P04 [未核验]: 声明=10.1115/1.4051416 | 核验=None | 正文=None
+  !! P15 [仅核验值]: 声明=None | 核验=10.1109/CEC65147.2025.11043110 | 正文=...
+  → 真正冲突的篇目：无（标 ?! 者为无本地原文、无法核验，不等于错误）
+
+【3】四维骨架抽取示例
+**核心痛点与研究动机**：语料中检索到以下直接表述（按出现顺序）：
+  - `corpus/txt/P01_s00158-021-03038-3.txt` 字符 [698:800]：
+    「However, the EI-based BO can get stuck in sub-optimal solutions even with a large number of samples.」
+  - `corpus/txt/P01_s00158-021-03038-3.txt` 字符 [17202:17248]：
+    「However, it drops exponentially when z ≤ 0 .」
+
+【4】跨文献演进拓扑
+  - 年份分布：{"2021": ["P01","P03"], "2023": ["P06","P07"], "2024": ["P08","P09","P10","P12"],
+               "2025": ["P11","P15","P16"], "2026": ["P17","P18","P19"]}
+  - 方法共现（前 5 对）：P06 ↔ P08 共享 7 个方法关键词；P06 ↔ P17 共享 7 个；……
+
+【5】跨文献互证 / 批评关系
+  - P08 → P06｜引用/互证｜命中「multiform」
+      `corpus/txt/P08_1-s2.0-S1270963824001317-main.txt` [59068:59877]
+  - P17 → P13｜批评/局限｜命中「EMFS」
+      `corpus/txt/P17_1-s2.0-S1270963826007042-main.txt` [21791:22595]
+```
+
+> 注意【4】是**统计结果**而非人工归类：年份取 `corpus/index.json` 的 `year_hint`，
+> 方法命中取正文正则匹配，未做任何人工判断。
+
+---
+
+## 五、作为 Python 库调用
 
 ```python
-from skills.omni_scholar.core import OmniScholarEngine, PaperMetadata
+from skills.omni_scholar.core import OmniScholarEngine
 
-# 初始化超脑引擎
-engine = OmniScholarEngine()
+eng = OmniScholarEngine()
 
-# 输入论文元数据与文本
-metadata = PaperMetadata(
-    title="Calibrated and recalibrated expected improvements for Bayesian optimization",
-    authors=["Zhendong Guo", "Yew-Soon Ong", "Haitao Liu"],
-    venue="Structural and Multidisciplinary Optimization",
-    year=2021,
-    doi="10.1007/s00158-021-03038-3",
-    abstract="Expected improvement (EI)..."
-)
+# ① DOI 核验
+print(eng.verify_doi("18")["status"])          # '一致'
 
-# 1. 四维逆向提炼
-deconstruction = engine.deconstruct_paper(paper_text="...", metadata=metadata)
+# ② 四维骨架（逐条可回溯）
+sk = eng.extract_skeleton("07")
+print(sk.validation_and_empirical_gains.render())
 
-# 2. 多专家对抗审查
-review = engine.multi_perspective_debate(deconstruction)
+# ③ 演进拓扑
+topo = eng.build_evolution_topology()
+print(topo["timeline_by_year"])
 
-# 3. 跨文献拓扑综合
-topology = engine.synthesize_cross_paper_topology([metadata])
-print("Omni-Scholar 深度分析执行完毕！")
+# ④ 在语料里找证据
+for hit in eng.grep("negative transfer", limit=5):
+    print(hit["paper"], hit["start"], hit["snippet"][:120])
 ```
 
 ---
 
-## 📌 维护与扩展指南
-- 后续接入新的学科（如传热拓扑优化、燃烧化学动力学、等离子体物理），只需在 `core.py` 的 `self.personas` 中扩展特定领域的物理学家与审稿人角色。
-- 保证所有生成的算法原型具有独立可运行性（Self-contained），杜绝缺失依赖。
+## 六、使用边界（请务必遵守）
+
+1. **输出是"候选证据"，不是结论。** 骨架抽取靠正则命中句子，可能命中噪声
+   （例如表格里的数字行）。引用前请打开对应字符区间人工核对。
+2. **无全文的篇目不生成骨架。** 论文 04、05、13、14、20 在本地没有正文，
+   `extract_skeleton()` 会直接报错并提示查阅 `corpus/web_evidence/` 与 `corpus/facts/`。
+3. **演进拓扑只反映"关键词共现"与"年份顺序"**，不等于真实的引用关系；
+   真实的引用关系请用 `--links`（基于方法名在正文中的实际命中）。
+4. **不生成代码。** 可运行算法实现在 `code/` 下，且全部通过自检
+   （`python tools/run_checks.py`）。

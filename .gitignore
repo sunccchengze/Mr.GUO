@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv*/
+.venv_audit/
+
+# 抽取工具运行时产物
+# corpus/txt/ = 论文正文抽取文本（付费论文全文，不入库，可用 tools/extract_corpus.py 重建）
+corpus/txt/
+# corpus/index.json = 事实底座索引（23KB，是 DOI/编号/字数的权威口径，必须入库）
+
+# 系统
+.DS_Store
+Thumbs.db

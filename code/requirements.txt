@@ -1,0 +1,6 @@
+# 本代码库只依赖 numpy（见 code/README.md 的"设计约定"）。
+# 之所以刻意不引入 scipy / scikit-learn / PyTorch / matplotlib：
+#   1. 可在无外网的算力节点上直接运行；
+#   2. 超参数搜索、正态 CDF、Cholesky 求解等均已在 code/ 内手写实现。
+# 经测试通过的版本：numpy 2.4.6（Python 3.11）
+numpy>=1.21
