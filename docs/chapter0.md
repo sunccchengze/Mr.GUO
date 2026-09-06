@@ -4,7 +4,13 @@
 
 ---
 
-### 0.1 燃气轮机到底是个啥？——吸气、压缩、点火、喷气四部曲
+### 0.1 燃气轮机到底是个啥？
+
+![燃气轮机工作原理示意（gas turbine working principle，中文标注版）](./images/gas_turbine_working_principle_zh.png)
+
+![燃气轮机工作原理示意（gas turbine working principle，英文标注版）](./images/gas_turbine_working_principle.png)
+
+> 上图把全书的研究对象拆成四步：**吸气 → 压缩 → 点火 → 喷气**。后面二十讲所做的一切优化，归根结底都在服务于中间那两步——**让压气机压得更省功、让涡轮转得更高效**。——吸气、压缩、点火、喷气四部曲
 
 把航空发动机简化到极致，它就是一根管子，干四件事：**吸气 → 压缩 → 点火 → 喷气**。
 

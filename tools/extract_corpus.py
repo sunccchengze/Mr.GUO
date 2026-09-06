@@ -45,7 +45,9 @@ PAPER_MAP = [
     ("03", "1-s2.0-S0017931021007298-main.pdf",             "pdf",  "10.1016/j.ijheatmasstransfer.2021.121626"),
     ("04", None,                                            "none", "10.1115/1.4051416"),
     ("05", None,                                            "none", "10.1115/1.4050358"),
-    ("06", "Generative_Multiform_Bayesian_Optimization.pdf", "pdf",  "10.1109/TCYB.2022.3168744"),
+    # DOI 已按 corpus/doi_verification.md 修正：文档旧值 ...3168744 尾号有误，
+    # 原文首页与第三方期刊的参考文献著录均为 ...3165044。
+    ("06", "Generative_Multiform_Bayesian_Optimization.pdf", "pdf",  "10.1109/TCYB.2022.3165044"),
     ("07", "1-s2.0-S1270963823005710-main.pdf",             "pdf",  "10.1016/j.ast.2023.108675"),
     ("08", "1-s2.0-S1270963824001317-main.pdf",             "pdf",  "10.1016/j.ast.2024.108998"),
     ("09", "S1270963824001482.htm",                         "html", "10.1016/j.ast.2024.109015"),
@@ -57,7 +59,9 @@ PAPER_MAP = [
     ("15", "AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf", "pdf", None),
     ("16", "1-s2.0-S1000936125000792-main.pdf",             "pdf",  "10.1016/j.cja.2025.103473"),
     ("17", "1-s2.0-S1270963826007042-main.pdf",             "pdf",  "10.1016/j.ast.2026.112324"),
-    ("18", "1-s2.0-S1270963826007315-main.pdf",             "pdf",  "10.1016/j.ast.2026.112440"),
+    # DOI 已按 corpus/doi_verification.md 修正：旧值 ...112440 指向一篇与本团队无关的
+    # GCN 论文（AST 178 Part B），正确文章号为 112351。
+    ("18", "1-s2.0-S1270963826007315-main.pdf",             "pdf",  "10.1016/j.ast.2026.112351"),
     ("19", "1-s2.0-S1000936126003122-main.pdf",             "pdf",  "10.1016/j.cja.2026.104374"),
     ("20", None,                                            "none", None),
 ]
@@ -273,8 +277,9 @@ def main() -> int:
     log(f"{'ID':<4}{'本地文件':<56}{'字符数':>9}{'页数':>6}  {'全文':<5}{'DOI'}")
     log("-" * 92)
     for r in index:
-        log(f"P{r['id']:<3}{r['file'][:54]:<56}{r['chars']:>9}{str(r['pages'] or '-'):>6}  "
-            f"{str(r['has_fulltext']):<5}{r['doi'] or 'None'}")
+        # 无本地原文的篇目 r['file'] 为 None，直接切片会抛 TypeError，故先兜底
+        log(f"P{r['id']:<3}{str(r['file'] or '-')[:54]:<56}{r['chars']:>9}"
+            f"{str(r['pages'] or '-'):>6}  {str(r['has_fulltext']):<5}{r['doi'] or 'None'}")
     log("=" * 92)
     log(f"共 {len(index)} 篇，语料已写入 {TXT_DIR}/ ，索引已写入 corpus/index.json")
     return 0

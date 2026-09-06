@@ -86,6 +86,34 @@ def read(path: str) -> str:
     return open(path, encoding="utf-8").read().strip()
 
 
+def normalize_fences(text: str) -> str:
+    """让每一个 ``` 栅栏行都独占一个"块"（前后各留一个空行）。
+
+    为什么要做：docs/lectures/ 里的伪代码栅栏有些写成"最后一行代码紧跟着 ```"，
+    这在 Markdown 渲染上没问题，但会让按空行切分来定位代码块的校验脚本
+    （tools/verify_all.py 的 A5）丢失栅栏配对，进而把正文/代码误判成"没有来源
+    标注的百分比断言"。统一规范化后，栅栏配对永远正确。
+
+    副作用：仅增删空行，不改变任何可见内容。
+    """
+    out: list[str] = []
+    for ln in text.split("\n"):
+        if ln.lstrip().startswith("```"):
+            if out and out[-1].strip() != "":
+                out.append("")
+            out.append(ln)
+            out.append("")
+        else:
+            out.append(ln)
+    # 折叠连续空行
+    res: list[str] = []
+    for ln in out:
+        if ln.strip() == "" and res and res[-1].strip() == "":
+            continue
+        res.append(ln)
+    return "\n".join(res)
+
+
 def lecture_title(content: str, fallback: str) -> str:
     first = content.splitlines()[0].strip() if content.strip() else ""
     m = re.match(r"^###\s+【(第\d{2}讲)】(.*)$", first)
@@ -139,6 +167,10 @@ def build_code_section() -> list[str]:
         out.append("")
         out.append("```python")
         out.append(src)
+        # 收尾的 ``` 前留一个空行：既符合 Markdown 排版习惯，也让按"空行切分"的
+        # 校验脚本（tools/verify_all.py 的 A5）能正确识别代码块边界——否则收尾
+        # 栅栏会黏在最后一行代码上，导致后续正文被误判为"未加来源标注的断言"。
+        out.append("")
         out.append("```")
         out.append("")
     return out
@@ -216,7 +248,8 @@ def main() -> None:
         doc.append(read(APPENDIX_PATH))
     doc.append("")
 
-    open(OUT, "w", encoding="utf-8").write("\n".join(doc) + "\n")
+    text = normalize_fences("\n".join(doc) + "\n")
+    open(OUT, "w", encoding="utf-8").write(text)
     n_ok = 20 - len(missing)
     print(f"[OK] 已生成 {os.path.relpath(OUT, ROOT)}")
     print(f"     讲稿完成 {n_ok}/20" + (f"，待重建：{'、'.join(missing)}" if missing else ""))
