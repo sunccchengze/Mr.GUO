@@ -328,6 +328,20 @@ def verify_images() -> None:
         check("C4-四篇配图", not nofig,
               "这些篇没有配图：" + "、".join(nofig) if nofig else "第一至第四篇各有配图")
 
+        # C5：每一讲的“原理/难点讲解处”至少 1 张配图（2026-09-06 第四轮新口径，
+        #   见 docs/重建计划.md §八。既有 6 讲中英成对；2026-09-06 起按用户指示
+        #   新增图仅生成中文标注版——两种形态均计入。）
+        heads = list(LECTURE_RE.finditer(t))
+        noimg = []
+        for i, m in enumerate(heads):
+            s = m.end()
+            e = heads[i + 1].start() if i + 1 < len(heads) else len(t)
+            if not IMAGE_REF_RE.search(t[s:e]):
+                noimg.append(f"第{m.group(1)}讲")
+        check("C5-每讲配图", not noimg,
+              "这些讲没有配图：" + "、".join(noimg) if noimg
+              else f"20/20 讲均至少 1 张配图（共 {t.count('./images/')} 处引用）")
+
 
 # --------------------------------------------------------------------------- D
 def verify_consistency() -> None:

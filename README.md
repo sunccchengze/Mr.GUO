@@ -96,7 +96,7 @@ Mr.GUO/
 │   ├── verify_whitepaper.py                        # 白皮书逐讲明细（定位哪一讲不达标）
 │   └── selftest_verifier.py                        # 反身测试：证明验收器对缺陷真的敏感
 ├── skills/omni_scholar/                            # 文献核验技能包（可运行，非占位）
-├── images/                                         # 12 张中英双语配图（6 主题成对）
+├── images/                                         # 37 张配图：既有 12 张中英成对 + 新增（前 5 讲成对、后 9 讲仅中文版）；20/20 讲均配图
 ├── Makefile                                        # venv / corpus / whitepaper / checks / verify / selftest
 └── README.md                                       # 仓库导航与全景索引
 ```
