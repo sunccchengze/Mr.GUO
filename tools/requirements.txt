@@ -1,0 +1,14 @@
+# 工具链依赖（仓库治理脚本用，与算法库解耦）
+#
+# 为什么单独一个文件：code/ 的算法库刻意只依赖 numpy（见 code/requirements.txt），
+# 以保证在无外网算力节点上直接运行；而下面这些第三方库只服务于
+# "把 PDF 变成可核验语料"这一仓库治理环节，不参与任何算法实现。
+#
+#   pypdf  → tools/extract_corpus.py 抽取 13 篇 PDF 正文（2 篇 HTML 用标准库即可）
+#   pytest → tests/ 单元测试（code/ 模块自带 __main__ 自检，不装 pytest 也能跑）
+#
+# 用法：
+#   python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
+#   .venv/bin/python tools/extract_corpus.py
+pypdf>=4.0
+pytest>=7.0

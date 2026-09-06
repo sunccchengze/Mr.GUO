@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -186,6 +187,17 @@ def main() -> None:
         lines.append("> 填入任何数字前，请先用 `python3 tools/extract_corpus.py --grep \"<数字>\"` 定位原文出处。")
 
         path = os.path.join(FACTS, f"P{pid}.md")
+
+        # 保护人工成果：本脚本只负责生成/刷新「骨架」。
+        # 若已存在的卡片不含 TODO，说明已依原文人工填写完毕，一律跳过，
+        # 避免下一次重跑把事实判断重新冲回占位符（旧版曾因此丢过内容）。
+        if os.path.exists(path) and "--force" not in sys.argv:
+            old = open(path, encoding="utf-8").read()
+            if "TODO" not in old:
+                print(f"[KEEP] {os.path.relpath(path, ROOT)}  已人工填写，跳过覆盖"
+                      f"（如需重建骨架请加 --force）")
+                continue
+
         open(path, "w", encoding="utf-8").write("\n".join(lines) + "\n")
         print(f"[OK] {os.path.relpath(path, ROOT)}  abstract={len(abstract)}  claims={len(claims)}")
 

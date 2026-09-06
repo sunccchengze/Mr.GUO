@@ -7,7 +7,7 @@ skills/omni_scholar/core.py —— 文献分析技能包（**真实实现版**�
 为什么重写
 ----------
 旧版 `core.py` 是一个"假装在工作"的壳子：所有方法都返回一段写死的漂亮话，
-`generate_reproducible_code_blueprint()` 更是直接返回一段写死的占位字符串。
+`generate_reproducible_code_blueprint()` 更是把假文本直接当结果返回。
 它不读取任何语料、不输出任何可回溯的证据。
 
 本版把它改造成**真正调用本仓库抽取能力的检索与核验工具**，并遵守与白皮书
@@ -254,9 +254,20 @@ class OmniScholarEngine:
         self._text_cache[pid] = content
         return content
 
+    def has_text(self, pid: str) -> bool:
+        """正文是否真的可检索。corpus/txt/ 是 .gitignore 排除的派生产物，
+        新克隆的仓库里默认不存在，必须先跑 tools/extract_corpus.py 生成。"""
+        return bool(self.text(pid).strip())
+
+    def corpus_ready(self) -> bool:
+        return any(self.has_text(pid) for pid in self.paper_ids())
+
     def evidence_level(self, pid: str) -> str:
         p = self.papers[pid]
         if p.get("has_fulltext"):
+            if not self.has_text(pid):
+                return ("A（本地有 PDF 原文，但尚未抽取正文，暂不可逐句回溯；"
+                        "运行 tools/extract_corpus.py 后可回溯）")
             return "A（本地有全文，可逐句回溯）"
         if p.get("kind") == "html":
             return "B（仅摘要级 HTML）"
@@ -535,6 +546,15 @@ class OmniScholarEngine:
 
 
 # --------------------------------------------------------------------------- CLI
+PREP_HINT = (
+    "正文语料尚未生成（corpus/txt/ 是派生产物，不入库）。\n"
+    "  一次性准备：\n"
+    "      python3 -m venv .venv && .venv/bin/pip install pypdf\n"
+    "      python3 tools/extract_corpus.py\n"
+    "  之后 --skeleton / --links / --grep / --demo 的全文检索部分即可输出真实结果。"
+)
+
+
 def _demo(engine: OmniScholarEngine) -> int:
     print("=" * 78)
     print("Omni-Scholar 端到端演示（全部输出来自 corpus/ 真实语料）")
@@ -556,13 +576,12 @@ def _demo(engine: OmniScholarEngine) -> int:
     print(f"  → 真正冲突的篇目：{bad if bad else '无'}"
           f"（标 ?! 者为无本地原文、无法核验，不等于错误）")
 
-    print("\n【3】四维骨架抽取示例（取一篇有全文的论文）")
-    target = next((p for p in engine.paper_ids()
-                   if engine.papers[p].get("has_fulltext")), None)
+    print("\n【3】四维骨架抽取示例（取一篇正文已抽取的论文）")
+    target = next((p for p in engine.paper_ids() if engine.has_text(p)), None)
     if target:
         print(engine.extract_skeleton(target).render())
     else:
-        print("  （语料中没有任何全文，跳过）")
+        print("  ⚠ 无可检索正文，本节跳过。\n  " + PREP_HINT)
 
     print("\n【4】跨文献演进拓扑")
     topo = engine.build_evolution_topology()
@@ -573,17 +592,27 @@ def _demo(engine: OmniScholarEngine) -> int:
               f" → {', '.join(c['shared_methods'][:3])}")
 
     print("\n【5】跨文献互证 / 批评关系（前 8 条）")
-    for lk in engine.detect_cross_paper_links()[:8]:
-        print(f"  - P{lk['from'][1:]} → {lk['to']}｜{lk['kind']}｜命中「{lk['match']}」")
-        print(f"      `{lk['source']}` [{lk['start']}:{lk['end']}]")
+    links = engine.detect_cross_paper_links()[:8]
+    if links:
+        for lk in links:
+            print(f"  - P{lk['from'][1:]} → {lk['to']}｜{lk['kind']}｜命中「{lk['match']}」")
+            print(f"      `{lk['source']}` [{lk['start']}:{lk['end']}]")
+    else:
+        print("  ⚠ 无已抽取正文，本节跳过。\n  " + PREP_HINT)
 
     print("\n【6】事实卡示例")
     if target:
         print(engine.generate_fact_card(target)[:1200])
         print("      ……（完整事实卡见 --fact-card 输出）")
+    else:
+        print("  ⚠ 无已抽取正文，本节跳过；人工事实卡见 `corpus/facts/`。")
 
     print("\n" + "=" * 78)
-    print("演示结束。以上每一条都可通过 (文件, 字符区间) 回溯到原文。")
+    if target:
+        print("演示结束。以上每一条都可通过 (文件, 字符区间) 回溯到原文。")
+    else:
+        print("演示结束：【1】【2】【4】基于已入库的 corpus/index.json 与 corpus/facts/，"
+              "离线即可复现；\n全文检索类小节需先完成上方的一次性语料抽取。")
     print("=" * 78)
     return 0
 
@@ -601,6 +630,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = ap.parse_args(argv)
 
     engine = OmniScholarEngine()
+
+    # 语料未抽取时，依赖全文的命令给出可执行的修复指引，而不是抛 traceback。
+    if args.skeleton and not engine.has_text(args.skeleton):
+        print(f"论文 P{args.skeleton} 的正文尚未抽取——本技能不生成无语料支撑的内容。\n\n{PREP_HINT}",
+              file=sys.stderr)
+        return 2
+    if (args.links or args.grep) and not engine.corpus_ready():
+        print(f"全文检索需要 corpus/txt/，当前仓库尚未抽取。\n\n{PREP_HINT}", file=sys.stderr)
+        return 2
 
     if args.demo:
         return _demo(engine)
@@ -651,6 +689,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         hits = engine.grep(args.grep)
         if args.json:
             print(json.dumps(hits, ensure_ascii=False, indent=2))
+        elif not hits:
+            print("（检索范围内无命中——已限定在 corpus/txt/ 的正文前 85%，"
+                  "可用 --json 查看已检索的语料清单）")
         else:
             for h in hits:
                 print(f"[P{h['paper'][1:]}] `{h['source']}` [{h['start']}:{h['end']}]")

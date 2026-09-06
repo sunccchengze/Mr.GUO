@@ -33,7 +33,7 @@
 | **12** | 2024 | Enhancing the Generalization Ability of Endwall Film Cooling Prediction by Incorporating Superposition Principle into Transformer-based Neural Operator | *SSRN / Elsevier* | `ssrn-4869789.pdf` | SDNO 叠加深层神经算子 / 气膜小样本大外推 |
 | **13** | 2024 | A Novel Multi-Fidelity Surrogate for Efficient Turbine Design Optimization | *J. Turbomach.* (ASME) | 在线收录 | DBSCAN 聚类侦测 / EMFS 局部高保真融合 |
 | **14** | 2024 | Generative Model Based Parameterization for More Efficient Aerodynamic Optimization of Non-Axisymmetric Endwall | *ASME Turbo Expo* | 会议收录 | 深度生成模型 / 非轴对称端壁紧凑参数化 |
-| **15** | 2024 | AI-Assisted Fluid-Structure Modeling and Optimization of Pump-Jet Propulsor | *IEEE Conference* | `AI-Assisted_Fluid-Structure_Modeling...pdf` | 泵喷推进器流固耦合 AI 辅助多目标优化 |
+| **15** | 2025 | AI-Assisted Fluid-Structure Modeling and Optimization of Pump-Jet Propulsor | *IEEE Congr. Evol. Comput. (CEC)* | `AI-Assisted_Fluid-Structure_Modeling...pdf` | 泵喷推进器流固耦合 AI 辅助多目标优化 |
 | **16** | 2025 | A panoramic aerodynamic performance prediction method for turbomachinery cascades using transformer-enhanced neural operator | *Chin. J. Aeronaut.* | `1-s2.0-S1000936125000792-main.pdf` | TNO Transformer 增强神经算子 / 全景 N-S 场预测 |
 | **17** | 2026 | Generative Transfer Optimization for More Efficient Turbine Blade Design | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963826007042-main.pdf` | GTO 生成对抗网络 (GAN) / 梯度重参数化迁移 |
 | **18** | 2026 | Physics-enhanced performance prediction and intelligent design for wide-operating-range turbine blades | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963826007315-main.pdf` | 流动相似原理 / ResUNet 宽工况智能设计 |
@@ -67,8 +67,8 @@ Mr.GUO/
 │   ├── 1-s2.0-S1270963824001317-main.pdf           # AST 2024 (SW-VAE 知识迁移)
 │   ├── 1-s2.0-S1270963826007042-main.pdf           # AST 2026 (GTO 生成式迁移)
 │   ├── 1-s2.0-S1270963826007315-main.pdf           # AST 2026 (相似原理宽工况)
-│   ├── A dynamic aggregation strategy enhanced...pdf # Eng Opt 2025 (DA-EGO 动态聚合)
-│   ├── AI-Assisted_Fluid-Structure_Modeling...pdf    # IEEE 2024 (泵喷推进器)
+│   ├── A dynamic aggregation strategy enhanced...pdf # Eng Opt 2024 在线 / 2025 卷期 (DA-EGO)
+│   ├── AI-Assisted_Fluid-Structure_Modeling...pdf    # IEEE CEC 2025 (泵喷推进器)
 │   ├── Generative_Multiform_Bayesian_Optimization.pdf # IEEE TCYB 2023 (GMFoO 优化)
 │   ├── S0142727X24003692.htm                       # IJHFF 2024 (FFD 叶顶气动热)
 │   ├── S1270963824001482.htm                       # AST 2024 (跨声速风洞实验)
@@ -79,8 +79,45 @@ Mr.GUO/
 ├── 公开论文整理.md                                 # 公开文献专题文档
 ├── 付费论文五篇整理.md                             # ASME/SPIE 专题文档
 ├── 论文链接整理.md                                 # 核心文献链接与检索入口
+├── docs/                                           # 白皮书源文件（白皮书由此装配，勿直接改产物）
+│   ├── lectures/01–20.md                           # 20 讲讲稿（每讲固定 6 节）
+│   ├── part6.md                                    # 第六篇：全景对比矩阵 / 横向批判 / 前瞻选题
+│   └── 重建计划.md                                 # 验收标准、进度与成绩单（本仓库的"宪法"）
+├── code/                                           # 10 个 NumPy-only 可运行算法模块
+├── tests/                                          # 9 个测试文件（129 + 37 用例）
+├── corpus/                                         # 事实底座：DOI 核验、20 张事实卡、证据分级
+│   ├── doi_verification.md                         # 20 篇逐条核查（曾查出 3 处硬伤）
+│   ├── facts/P01–P20.md                            # 结构化事实卡（数字的唯一来源）
+│   └── web_evidence/P04,05,13,14,20.md             # 无原文论文的补全依据
+├── tools/                                          # 装配、抽取与自动验收脚本
+│   ├── extract_corpus.py                           # PDF/HTML → 可检索语料（需 pypdf）
+│   ├── build_whitepaper.py                         # docs/lectures + code/ → 白皮书
+│   ├── verify_all.py                               # 一键验收：目标 A–F 共 28 项
+│   ├── verify_whitepaper.py                        # 白皮书逐讲明细（定位哪一讲不达标）
+│   └── selftest_verifier.py                        # 反身测试：证明验收器对缺陷真的敏感
+├── skills/omni_scholar/                            # 文献核验技能包（可运行，非占位）
+├── images/                                         # 12 张中英双语配图（6 主题成对）
+├── Makefile                                        # venv / corpus / whitepaper / checks / verify / selftest
 └── README.md                                       # 仓库导航与全景索引
 ```
+
+---
+
+## ✅ 如何验收本仓库（可复现）
+
+本仓库的验收标准写在 [`docs/重建计划.md`](./docs/重建计划.md)，机器可验部分由脚本判定：
+
+```bash
+make venv                    # 建虚拟环境并装 numpy + pypdf + pytest
+make corpus                  # 抽取 13 PDF + 2 HTML 正文到 corpus/txt/（派生物，不入库）
+make verify                  # 全仓验收（A 内容 / B 代码 / C 配图 / D 口径 / E 技能包 / F 交付物）
+make selftest                # 反身测试：把已知缺陷注回仓库，断言验收器必须变红
+```
+
+> **为什么有 `make selftest`**：本仓库曾出现过"验收器报 18/18 全绿、实际仍有大量不达标"的情况——
+> 原因是**裁判脚本比标准宽松**（小节命中 4/6 即放行、块内出现任意"［"就算有出处、E1 因 `and`/`or` 优先级失效、
+> 而"第六篇是否为空壳""事实卡是否仍是骨架""演示命令能否跑通"根本没被检查）。
+> 因此验收结论只有在"裁判被证明会亮红灯"时才有意义，`selftest` 就是为此存在的。
 
 ---
 
