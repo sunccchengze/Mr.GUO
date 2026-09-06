@@ -332,16 +332,68 @@ def verify_images() -> None:
         # C5：每一讲的“原理/难点讲解处”至少 1 张配图（2026-09-06 第四轮新口径，
         #   见 docs/重建计划.md §八。既有 6 讲中英成对；2026-09-06 起按用户指示
         #   新增图仅生成中文标注版——两种形态均计入。）
+        # 注意：必须**同时**查白皮书与讲义源文件。
+        #   2026-09-06 第十二轮反身测试暴露：C5 原先只扫白皮书，
+        #   把讲义源的图删光后 C5 依然 PASS（只有 F4 报源/派生不一致）——
+        #   与 A7 当初"只扫 docs/、改派生物即可绕过"是同一类盲区，方向相反而已。
         heads = list(LECTURE_RE.finditer(t))
         noimg = []
         for i, m in enumerate(heads):
             s = m.end()
             e = heads[i + 1].start() if i + 1 < len(heads) else len(t)
             if not IMAGE_REF_RE.search(t[s:e]):
-                noimg.append(f"第{m.group(1)}讲")
+                noimg.append(f"第{m.group(1)}讲（白皮书）")
+        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md"))):
+            if not IMAGE_REF_RE.search(open(f, encoding="utf-8").read()):
+                noimg.append(f"第{os.path.basename(f)[:2]}讲（讲义源）")
         check("C5-每讲配图", not noimg,
               "这些讲没有配图：" + "、".join(noimg) if noimg
               else f"20/20 讲均至少 1 张配图（共 {t.count('./images/')} 处引用）")
+
+
+    # ---- C6：图注里的数字，必须和正文一样带出处、且能回溯语料
+    #   图注长期是"检查盲区"——A5 只扫正文句子，图注被当成附属物放过。
+    #   但图注里的数字（"降低 14.0%"、"93 维"）读者是当结论看的，注水风险与正文等同。
+    #   2026-09-06 第十二轮全量图文校对时补齐：当时正有 2 处含数字却无出处标签。
+    import unicodedata as _ud
+
+    def _n(x: str) -> str:
+        x = _ud.normalize("NFKC", x)
+        x = re.sub(r"=====\s*\[PAGE[^\]]*\]\s*=====", " ", x)
+        x = re.sub(r"-\s+", "", x)
+        x = "".join(c for c in _ud.normalize("NFKD", x) if not _ud.combining(c))
+        return re.sub(r"[^A-Za-z0-9%.]", "", x).lower()
+
+    corp_blob: dict[str, str] = {}
+    for _p in glob.glob(os.path.join(CORPUS, "txt", "*.txt")):
+        corp_blob[os.path.basename(_p)[:3]] = _n(open(_p, encoding="utf-8", errors="ignore").read())
+    for _p in glob.glob(os.path.join(CORPUS, "facts", "*.md")):
+        k = os.path.basename(_p)[:3]
+        corp_blob[k] = corp_blob.get(k, "") + _n(open(_p, encoding="utf-8").read())
+
+    nosrc, unhit = [], []
+    for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md"))):
+        for m in re.finditer(r"!\[([^\]]*)\]\(\./images/([^)]+)\)", open(f, encoding="utf-8").read()):
+            alt, img = m.group(1), m.group(2)
+            nums = re.findall(r"\d+\.?\d*\s*%|\d+\.\d+|\b\d{2,}\b", alt)
+            # 讲次号/论文号（01-20）不算数据
+            nums = [x for x in nums if not re.match(r"^(0[1-9]|1\d|20)$", x.strip())]
+            if not nums:
+                continue
+            pm = re.search(r"P(\d\d)", alt)
+            if not pm:
+                nosrc.append(f"{img}（{'、'.join(nums[:3])}）")
+                continue
+            blob = corp_blob.get("P" + pm.group(1), "")
+            if blob:
+                miss = [x for x in nums if _n(x) not in blob]
+                if miss:
+                    unhit.append(f"{img}：{'、'.join(miss[:3])} 未在 P{pm.group(1)} 命中")
+    ok_c6 = not nosrc and not unhit
+    check("C6-图注数字有源", ok_c6,
+          ("图注含数字却无出处：" + "；".join(nosrc[:3]) if nosrc else "") +
+          ("｜回溯失败：" + "；".join(unhit[:3]) if unhit else "")
+          if not ok_c6 else "含数字的图注均带出处标签且可回溯语料")
 
 
 # --------------------------------------------------------------------------- D

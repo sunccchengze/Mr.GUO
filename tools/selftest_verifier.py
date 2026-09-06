@@ -31,6 +31,7 @@ PART6 = os.path.join(ROOT, "docs", "part6.md")
 FACT01 = os.path.join(ROOT, "corpus", "facts", "P01.md")
 LECT03 = os.path.join(ROOT, "docs", "lectures", "03.md")
 LECT10 = os.path.join(ROOT, "docs", "lectures", "10.md")
+LECT17 = os.path.join(ROOT, "docs", "lectures", "17.md")
 SAMPLING = os.path.join(ROOT, "code", "sampling.py")
 QUANJI = os.path.join(ROOT, "郭老师论文全集综合整理汇总.md")
 LINKS = os.path.join(ROOT, "论文链接整理.md")
@@ -79,6 +80,10 @@ MUTATIONS = [
     ("A8 自陈算式算错", LECT03, "1500/20000 = 7.5%", "1500/20000 = 15.0%", "A8"),
     # 第六轮新增：LaTeX 结构损坏（公式渲染成乱码），必须被 A9 抓到
     ("A9 公式花括号损坏", LECT03, "$$", "$$\\frac{a}{b$$\n\n$$", "A9"),
+    # 第十二轮新增：图注里的数字被抽掉出处标签（图注长期是检查盲区），必须被 C6 抓到
+    ("C6 图注数字失去出处", LECT17,
+     "（cascade rig，数值见［原文 P09 摘要］，手绘笔记版）",
+     "（cascade rig，手绘笔记版）", "C6"),
     ("A7 无源套话回流", WP, "\n## 6.5 全书收口",
      "\n本方法把端壁二次流损失显著降低。\n\n## 6.5 全书收口", "A7"),
     # 第五轮新增：自称"逐字/verbatim"的英文摘要被改写或截断，必须被 F5 抓到
@@ -86,9 +91,10 @@ MUTATIONS = [
     ("F5 逐字摘要被篡改", FACT01,
      "has been widely used to guide the Bayesian optimization (BO).",
      "has been broadly adopted to steer the Bayesian optimization process (BO).", "F5"),
-    ("C5 某讲配图整体消失", WP,
-     "![TNO 全景预测：架构与单次评估代价（TNO panoramic prediction，中文标注版）](./images/tno_panoramic_prediction_zh.png)",
-     "", "C5"),
+    # C5 变异：删掉某一讲的**全部**配图。
+    #   旧用例只删 1 张，但随着每讲配图增至 2~3 张，删 1 张已不足以让该讲无图——
+    #   2026-09-06 第十二轮反身测试当场暴露此用例失效（C5 漏检），遂改为整讲清空。
+    ("C5 某讲配图整体消失", LECT17, "__ALL_IMAGES__", "", "C5"),
 ]
 
 
@@ -139,12 +145,22 @@ def main() -> int:
         for case in MUTATIONS:
             name, path, needle, repl = case[0], case[1], case[2], case[3]
             want = case[4] if len(case) > 4 else None
-            if not os.path.exists(path) or needle not in open(path, encoding="utf-8").read():
-                print(f"⚠ 跳过「{name}」：注入锚点不存在（该用例需随正文演进更新）")
-                continue
-            t = open(path, encoding="utf-8").read()
-            count = -1 if (len(case) > 5 and case[5] == "all") else 1
-            open(path, "w", encoding="utf-8").write(t.replace(needle, repl, count))
+            # 特殊锚点：删掉该文件里的**全部**图引用（用于 C5——某讲配图整体消失）。
+            # 每讲配图已增至 2~3 张，删单张不再能让该讲无图，必须整讲清空。
+            if needle == "__ALL_IMAGES__":
+                if not os.path.exists(path):
+                    print(f"⚠ 跳过「{name}」：文件不存在 {path}")
+                    continue
+                t = open(path, encoding="utf-8").read()
+                open(path, "w", encoding="utf-8").write(
+                    re.sub(r"!\[[^\]]*\]\(\./images/[^)]+\)\n?", "", t))
+            else:
+                if not os.path.exists(path) or needle not in open(path, encoding="utf-8").read():
+                    print(f"⚠ 跳过「{name}」：注入锚点不存在（该用例需随正文演进更新）")
+                    continue
+                t = open(path, encoding="utf-8").read()
+                count = -1 if (len(case) > 5 and case[5] == "all") else 1
+                open(path, "w", encoding="utf-8").write(t.replace(needle, repl, count))
             # B 用例必须全量真跑才能捕获；其余用例用加速模式。
             after = items(run_verify(fast=not (want or "").startswith("B")))
             caught = [k for k, v in after.items() if v == "FAIL"]
