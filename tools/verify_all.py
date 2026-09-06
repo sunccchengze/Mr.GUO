@@ -303,7 +303,10 @@ def verify_images() -> None:
         for m in re.finditer(r"!\[([^\]]*)\]\(\./images/([^)]+)\)", t):
             alt, fname = m.group(1), m.group(2)
             stem = os.path.splitext(fname)[0]
-            key = stem.replace("_zh", "").replace("_en", "")
+            # 只剥离行尾的 _zh/_en 后缀。旧写法 stem.replace("_en","") 会把
+            # 文件名中间的 "_en…"（如 vae_nurbs_endwall）一并误删，导致 C3 误报——
+            # 2026-09-06 第四轮补图时发现，已修。
+            key = re.sub(r"_(zh|en)$", "", stem)
             # 图注中的英文串应与文件名有实词交集
             words = {w.lower() for w in re.findall(r"[A-Za-z]{4,}", key)}
             altw = {w.lower() for w in re.findall(r"[A-Za-z]{4,}", alt)}
