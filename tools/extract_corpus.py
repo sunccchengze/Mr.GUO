@@ -55,15 +55,18 @@ PAPER_MAP = [
     ("11", "A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems.pdf", "pdf", "10.1080/0305215X.2024.2325651"),
     ("12", "ssrn-4869789.pdf",                              "pdf",  "10.2139/ssrn.4869789"),
     ("13", None,                                            "none", "10.1115/1.4064228"),
-    ("14", None,                                            "none", None),
-    ("15", "AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf", "pdf", None),
+    # 2026-09-06 二次核验：Crossref 可直接命中（proceedings-article，GT2024-128792，
+    # 文章号 V12DT34A025），旧版"Crossref 未命中"为误判。
+    ("14", None,                                            "none", "10.1115/GT2024-128792"),
+    ("15", "AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf", "pdf", "10.1109/CEC65147.2025.11043110"),
     ("16", "1-s2.0-S1000936125000792-main.pdf",             "pdf",  "10.1016/j.cja.2025.103473"),
     ("17", "1-s2.0-S1270963826007042-main.pdf",             "pdf",  "10.1016/j.ast.2026.112324"),
     # DOI 已按 corpus/doi_verification.md 修正：旧值 ...112440 指向一篇与本团队无关的
     # GCN 论文（AST 178 Part B），正确文章号为 112351。
     ("18", "1-s2.0-S1270963826007315-main.pdf",             "pdf",  "10.1016/j.ast.2026.112351"),
     ("19", "1-s2.0-S1000936126003122-main.pdf",             "pdf",  "10.1016/j.cja.2026.104374"),
-    ("20", None,                                            "none", None),
+    # 2026-09-06 二次核验：Proc. SPIE 14253 (HARCT 2026), 142530E；旧版"SPIE 未开放索引"为误判。
+    ("20", None,                                            "none", "10.1117/12.3117536"),
 ]
 
 # 按文件名唯一化（防御性：同一文件被误配两次时只抽一次）
@@ -147,6 +150,26 @@ def read_html(path: str) -> tuple[str, dict]:
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+")
 
 
+_YEAR = r"(20[0-2]\d)"
+# 年份嗅探按“出版语义”排优先级，而不是取首页第一个 20xx（旧逻辑曾把 P02 参考文献里的 2016 当成出版年）。
+_YEAR_RULES = [
+    re.compile(r"(?:Available\s*online|Published\s*online|First\s*published|Published)[^\n]{0,60}?" + _YEAR, re.I),
+    re.compile(r"VOL\.[^\n]{0,60}?" + _YEAR),                     # IEEE 卷期行：VOL. 53, NO. 7, JULY 2023
+    re.compile(r"(?:©|Copyright)[^\n]{0,120}?" + _YEAR),
+    re.compile(r"Accepted[^\n]{0,60}?" + _YEAR, re.I),
+]
+
+
+def sniff_year(head: str) -> str | None:
+    """从首页文本嗅探出版年：在线发表/卷期/版权/录用 依次兜底，最后才退回“首个孤立的 20xx”。"""
+    for rule in _YEAR_RULES:
+        m = rule.search(head)
+        if m:
+            return m.group(1)
+    m = re.search(r"(?<!\d)" + _YEAR + r"(?!\d)", head)
+    return m.group(1) if m else None
+
+
 def sniff_metadata(text: str, fallback_doi: str | None) -> dict:
     """从首页文本中尽力嗅探元数据；嗅探不到的字段保持 None。"""
     head = text[:6000]
@@ -158,9 +181,7 @@ def sniff_metadata(text: str, fallback_doi: str | None) -> dict:
     elif fallback_doi:
         out["doi"] = fallback_doi
 
-    years = re.findall(r"\b(20[0-2]\d)\b", head)
-    if years:
-        out["year_hint"] = years[0]
+    out["year_hint"] = sniff_year(head)
 
     # 期刊线索：常见刊名
     for name in ("Aerospace Science and Technology", "Chinese Journal of Aeronautics",

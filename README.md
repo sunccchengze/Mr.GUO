@@ -11,7 +11,7 @@
 - 📄 **[公开论文整理.md](./公开论文整理.md)** —— 开源/公开出版物专题整理与摘要
 - 💎 **[付费论文五篇整理.md](./付费论文五篇整理.md)** —— ASME / SPIE 重点期刊与会议论文精细化专题整理
 - 🔗 **[论文链接整理.md](./论文链接整理.md)** —— 核心发表物 DOI 与出版商检索入口索引
-- 📁 **[郭老师论文/](./郭老师论文/)** —— 本地论文全文原件存储目录（包含 13 篇 PDF 与 2 篇 ScienceDirect HTML 原文）
+- 📁 **[郭老师论文/](./郭老师论文/)** —— 本地论文原件存储目录（13 篇 PDF 全文 + 2 篇 ScienceDirect 页面 HTML；后者**仅含摘要与著录**，见论文 09、10）
 
 ---
 
@@ -32,13 +32,13 @@
 | **11** | 2024 | A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems | *Eng. Optimization* | `A dynamic aggregation strategy enhanced...pdf` | DA-EGO 动态子空间分解与聚合算法 |
 | **12** | 2024 | Enhancing the Generalization Ability of Endwall Film Cooling Prediction by Incorporating Superposition Principle into Transformer-based Neural Operator | *SSRN / Elsevier* | `ssrn-4869789.pdf` | SDNO 叠加深层神经算子 / 气膜小样本大外推 |
 | **13** | 2024 | A Novel Multi-Fidelity Surrogate for Efficient Turbine Design Optimization | *J. Turbomach.* (ASME) | 在线收录 | DBSCAN 聚类侦测 / EMFS 局部高保真融合 |
-| **14** | 2024 | Generative Model Based Parameterization for More Efficient Aerodynamic Optimization of Non-Axisymmetric Endwall | *ASME Turbo Expo* | 会议收录 | 深度生成模型 / 非轴对称端壁紧凑参数化 |
+| **14** | 2024 | Generative Model Based Parameterization for More Efficient Aerodynamic Optimization of Non-Axisymmetric Endwall | *ASME Turbo Expo* (GT2024-128792) | 会议收录 | VAE + NURBS 层 / 非轴对称端壁生成式参数化（9 变量） |
 | **15** | 2025 | AI-Assisted Fluid-Structure Modeling and Optimization of Pump-Jet Propulsor | *IEEE Congr. Evol. Comput. (CEC)* | `AI-Assisted_Fluid-Structure_Modeling...pdf` | 泵喷推进器流固耦合 AI 辅助多目标优化 |
 | **16** | 2025 | A panoramic aerodynamic performance prediction method for turbomachinery cascades using transformer-enhanced neural operator | *Chin. J. Aeronaut.* | `1-s2.0-S1000936125000792-main.pdf` | TNO Transformer 增强神经算子 / 全景 N-S 场预测 |
 | **17** | 2026 | Generative Transfer Optimization for More Efficient Turbine Blade Design | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963826007042-main.pdf` | GTO 生成对抗网络 (GAN) / 梯度重参数化迁移 |
 | **18** | 2026 | Physics-enhanced performance prediction and intelligent design for wide-operating-range turbine blades | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963826007315-main.pdf` | 流动相似原理 / ResUNet 宽工况智能设计 |
 | **19** | 2026 | SHAP-based data mining for high-dimensional design space of high-pressure turbine stage | *Chin. J. Aeronaut.* | `1-s2.0-S1000936126003122-main.pdf` | GE-E3 高压透平级 93维设计空间 SHAP 特征归因 |
-| **20** | 2026 | Physics-enhanced AI model for panoramic prediction of the meridional performance of turbomachinery cascades | *SPIE Conference* | 会议收录 | 物理增强全景叶栅子午面性能重建 |
+| **20** | 2026 | Physics-enhanced AI model for panoramic prediction of the meridional performance of turbomachinery cascades | *Proc. SPIE* 14253 (HARCT 2026) | 会议收录 | 物理增强 Transformer 神经算子 / 高压涡轮级子午面全景预测 |
 
 ---
 
@@ -59,7 +59,7 @@
 
 ```
 Mr.GUO/
-├── 郭老师论文/                                      # 本地论文全文原件（15篇）
+├── 郭老师论文/                                      # 本地论文原件（15 个文件：13 篇 PDF 全文 + 2 篇仅摘要级 HTML）
 │   ├── 1-s2.0-S0017931021007298-main.pdf           # IJHMT 2021 (非轴对称端壁)
 │   ├── 1-s2.0-S1000936125000792-main.pdf           # CJA 2025 (TNO 神经算子)
 │   ├── 1-s2.0-S1000936126003122-main.pdf           # CJA 2026 (SHAP 数据挖掘)
@@ -70,8 +70,8 @@ Mr.GUO/
 │   ├── A dynamic aggregation strategy enhanced...pdf # Eng Opt 2024 在线 / 2025 卷期 (DA-EGO)
 │   ├── AI-Assisted_Fluid-Structure_Modeling...pdf    # IEEE CEC 2025 (泵喷推进器)
 │   ├── Generative_Multiform_Bayesian_Optimization.pdf # IEEE TCYB 2023 (GMFoO 优化)
-│   ├── S0142727X24003692.htm                       # IJHFF 2024 (FFD 叶顶气动热)
-│   ├── S1270963824001482.htm                       # AST 2024 (跨声速风洞实验)
+│   ├── S0142727X24003692.htm                       # IJHFF 2024 (FFD 叶顶气动热) —— 仅摘要级页面
+│   ├── S1270963824001482.htm                       # AST 2024 (跨声速风洞实验) —— 仅摘要级页面
 │   ├── s00158-021-02931-1.pdf                      # SMO 2021 (Filter-GEI 多保真)
 │   ├── s00158-021-03038-3.pdf                      # SMO 2021 (CR-EI 贝叶斯优化)
 │   └── ssrn-4869789.pdf                            # SSRN 2024 (SDNO 叠加神经算子)
@@ -92,7 +92,7 @@ Mr.GUO/
 ├── tools/                                          # 装配、抽取与自动验收脚本
 │   ├── extract_corpus.py                           # PDF/HTML → 可检索语料（需 pypdf）
 │   ├── build_whitepaper.py                         # docs/lectures + code/ → 白皮书
-│   ├── verify_all.py                               # 一键验收：目标 A–F 共 28 项
+│   ├── verify_all.py                               # 一键验收：目标 A–F 共 29 项
 │   ├── verify_whitepaper.py                        # 白皮书逐讲明细（定位哪一讲不达标）
 │   └── selftest_verifier.py                        # 反身测试：证明验收器对缺陷真的敏感
 ├── skills/omni_scholar/                            # 文献核验技能包（可运行，非占位）

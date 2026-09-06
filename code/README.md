@@ -40,10 +40,10 @@ class RbfWithSd:
 | :--- | :--- | :--- |
 | `sampling.py` | 拉丁超立方（LHS）、均匀随机、尺度变换、粗粒度敏感性排序 | 论文 04（LHS+UQ）、论文 05（均匀设计）、论文 11 |
 | `benchmarks.py` | 14 个基准测试函数（含论文 01 的 Camel6/Hartman6/Shekel4/Trid10、论文 06/08 的 Ackley6d 与平移 Rosenbrock6d） | 论文 01/06/07/08/11 |
-| `gp.py` | 普通 Kriging（ARD 高斯相关、集中似然、留一诊断）+ EI / GEI + 一阶效应分解 | 论文 01/02/03/04/05/16/17/18 |
+| `gp.py` | 普通 Kriging（ARD 高斯相关、集中似然、留一诊断）+ EI / GEI + 一阶效应分解 | 论文 01/02/03/04/06/08/17（Kriging/GP 为核心或基础组件；16 仅作对比基线） |
 | `rbf.py` | 径向基函数代理（三次 RBF + 线性尾项，GSDE 的选择） | 论文 07 |
 | `optimizer.py` | DE（best/1、rand/1；二项/指数交叉）、PSO、EGO、**CR-EI**（CEI/REI 互补分区 + 调度）、GSDE 骨架 | 论文 01、论文 07 |
-| `multifidelity.py` | AR1 Co-Kriging、**Filter-GEI 的 ω 与 T 原文公式**、层次聚类去重叠、DBSCAN、EMFS 集成 | 论文 02、论文 13、论文 08 |
+| `multifidelity.py` | AR1 Co-Kriging、**Filter-GEI 的 ω 与 T 原文公式**、层次聚类去重叠、DBSCAN、EMFS 集成 | 论文 02（Co-Kriging + Filter-GEI）、论文 13（DBSCAN/EMFS，据摘要）、论文 17（co-kriging 基线）、论文 08（多保真迁移） |
 | `moo.py` | 非支配排序、拥挤距离、NSGA-II、超体积、IGD、分布均匀性 | 论文 15、论文 16 |
 | `metrics.py` | 总压损失系数、气膜有效度、综合冷却效率、Nu、等熵效率、面积/质量平均、变化量口径 | 论文 09/10/04/05/07 |
 | `decomposition.py` | 变量交互检测（蒙特卡洛 ANOVA）、P_C/P_S 三类划分、并查集分组、精英点聚合、边界收缩 | 论文 11（DA-EGO） |

@@ -26,8 +26,10 @@ WP = os.path.join(ROOT, "燃气轮机智能设计与前沿算法自学白皮书.
 FACTS = os.path.join(ROOT, "corpus", "facts", "P09.md")
 README = os.path.join(ROOT, "README.md")
 SKILL_README = os.path.join(ROOT, "skills", "omni_scholar", "README.md")
+LINKS = os.path.join(ROOT, "论文链接整理.md")
+PAID = os.path.join(ROOT, "付费论文五篇整理.md")
 
-# (用例名, 被改文件, 搜索串, 替换串, 期望变红的检查项)
+# (用例名, 被改文件, 搜索串, 替换串, 期望变红的检查项[, "all"=替换全部出现而非仅首个])
 MUTATIONS = [
     ("A4 小节缺失", WP, "#### 2. 叶轮机械中的真实工程死穴：方案论证阶段",
      "#### 2. 为什么值得单独做一篇", "A4"),
@@ -38,6 +40,11 @@ MUTATIONS = [
     ("D4b 错误年份回流", README, "| **15** | 2025 |",
      "| **15** | 2024 | *IEEE Conference 2024* |"),
     ("E3 端到端命令缺失", SKILL_README, "core.py --demo", "core.py --无此命令"),
+    # 第三轮新增：无本地原文的论文 DOI 从索引文档消失，必须被 D4a 抓到
+    # （DOI 在该条目中出现 3 次：链接文字、doi.org、出版商 URL——必须整体抹掉，故标记 all）
+    ("D4a 无原文论文的DOI丢失", LINKS, "10.1117/12.3117536", "10.1117/12.0000000", "D4a", "all"),
+    # 第三轮新增：规范编号从付费五篇整理中消失（回退为纯文内顺序号），必须被 D5 抓到
+    ("D5 规范编号缺失", PAID, "【论文 14】", "", "D5"),
 ]
 
 
@@ -87,7 +94,8 @@ def main() -> int:
                 print(f"⚠ 跳过「{name}」：注入锚点不存在（该用例需随正文演进更新）")
                 continue
             t = open(path, encoding="utf-8").read()
-            open(path, "w", encoding="utf-8").write(t.replace(needle, repl, 1))
+            count = -1 if (len(case) > 5 and case[5] == "all") else 1
+            open(path, "w", encoding="utf-8").write(t.replace(needle, repl, count))
             after = items(run_verify())
             caught = [k for k, v in after.items() if v == "FAIL"]
             if want:
