@@ -8,7 +8,7 @@
 #   make verify                   # 全仓验收（目标 A–F），任一 FAIL 即退出码 1
 #   make wp-strict                  # 白皮书逐讲明细校验（目标 A 定位用）
 #   make selftest                 # 反身测试：确认验收器对缺陷真的敏感
-#   make all                      # corpus + whitepaper + checks + verify
+#   make all                      # whitepaper + checks + verify + selftest（注意：不含 corpus；新克隆请先跑 make corpus 生成语料）
 #   make clean                    # 清除派生产物（corpus/txt、__pycache__）
 
 PYTHON ?= python3

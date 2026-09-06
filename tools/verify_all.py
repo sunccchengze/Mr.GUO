@@ -52,11 +52,59 @@ FORBIDDEN = [
     ("IEEE Conference 2024", "论文 15 的错误年份（应为 IEEE CEC 2025）"),
     ("*IEEE 2024*", "论文 15 的错误年份（应为 IEEE CEC 2025）"),
     ("精度 98%", "论文 18 的旧版虚构指标"),
+    # --- 本轮审计新增（2026-09-06）：上一轮 P6 自称“已统一”实则漏网的残留 ---
+    ("Eng Opt (2025)", "论文 11 的单年份旧口径（应为“2024-04-18 在线；正式卷期 2025, 57(2)”）"),
+    ("HTML 全文", "两篇 htm 仅为摘要页却冒充全文（应为“HTML 摘要页”）"),
+    ("HTML全文", "两篇 htm 仅为摘要页却冒充全文（应为“HTML 摘要页”）"),
+    ("HTML 格式全文", "两篇 htm 仅为摘要页却冒充全文（应为“HTML 摘要页”）"),
+    ("HTML原文", "两篇 htm 仅为摘要页却冒充原文"),
+    ("总压总效率", "笔误（应为“总-总等熵效率”）"),
+    # 全集曾用改写摘要冒充 Official Abstract（现已逐字替换，此处防回归）：
+    ("non-axisymmetric endwalls (NAE), a transonic aerodynamic test platform was constructed",
+     "论文 09 的改写版摘要（逐字版见事实卡 P09 §二）"),
+    ("technique with high freedom and superior smoothness. Driven by a large-variable optimization algorithm",
+     "论文 10 的改写版摘要（逐字版见事实卡 P10 §二）"),
+    ("an efficient uncertainty quantification method evaluates the impacts of slot width",
+     "论文 04 的改写版摘要（逐字版见 corpus/web_evidence/P04.md）"),
+    # 2026-09-06 第三轮复审新增（见 docs/重建计划.md §六；合并自独立复审分支）
+    ("GAN-Endwall", "论文 14 的方法是 VAE + NURBS 层（出版商摘要），旧代号 GAN-Endwall 属误称"),
+    ("SPIE-AI", "论文 20 的旧版臆造代号；现按摘要写作“物理增强子午面全景预测”"),
+    ("Official Abstract", "全集汇总 §三 的中文转述曾被标为 Official Abstract，应写“摘要转述”"),
 ]
 
 # extract_corpus.py 允许的标准库（不要求在 requirements 中声明）
-_STDLIB_OK = {"__future__", "argparse", "html", "json", "os", "re", "sys", "unicodedata",
-              "datetime", "pathlib", "typing", "collections", "itertools", "functools"}
+_STDLIB_OK = {"__future__", "argparse", "hashlib", "html", "json", "os", "re", "sys", "unicodedata",
+              "datetime", "pathlib", "typing", "collections", "itertools", "functools", "subprocess",
+              "shutil", "tempfile", "glob", "ast", "math", "random", "time", "dataclasses"}
+
+# index.json curated 年份/载体的期望值（与 tools/extract_corpus.py 的 CURATED_META 同源，
+# 复制一份在此做交叉核对；若两处不一致，说明有一处被单独改动过，必须人工介入）。
+CURATED_EXPECT = {
+    "01": (2021, "Structural and Multidisciplinary Optimization"),
+    "02": (2021, "Structural and Multidisciplinary Optimization"),
+    "03": (2021, "International Journal of Heat and Mass Transfer"),
+    "04": (2021, "ASME Journal of Turbomachinery"),
+    "05": (2021, "ASME Journal of Turbomachinery"),
+    "06": (2023, "IEEE Transactions on Cybernetics"),
+    "07": (2023, "Aerospace Science and Technology"),
+    "08": (2024, "Aerospace Science and Technology"),
+    "09": (2024, "Aerospace Science and Technology"),
+    "10": (2024, "International Journal of Heat and Fluid Flow"),
+    "11": (2024, "Engineering Optimization"),
+    "12": (2024, "SSRN Preprint"),
+    "13": (2024, "ASME Journal of Turbomachinery"),
+    "14": (2024, "ASME Turbo Expo"),
+    "15": (2025, "IEEE Congress on Evolutionary Computation (CEC)"),
+    "16": (2025, "Chinese Journal of Aeronautics"),
+    "17": (2026, "Aerospace Science and Technology"),
+    "18": (2026, "Aerospace Science and Technology"),
+    "19": (2026, "Chinese Journal of Aeronautics"),
+    "20": (2026, "SPIE Conference"),
+}
+
+# 事实卡规定的 7 类栏目（关键词须出现在 ## 标题中）
+FACT_SECTIONS = ["权威著录", "摘要", "量化指标", "方法机理", "验证", "局限", "承前启后"]
+
 
 results: list[tuple[str, bool, str]] = []
 
@@ -71,8 +119,11 @@ def verify_whitepaper() -> None:
         check("A-内容", False, "白皮书文件不存在")
         return
     text = open(WHITEPAPER, encoding="utf-8").read()
-    chars = len(re.sub(r"\s", "", text))
-    check("A1-篇幅", chars >= 60000, f"正文去空白 {chars} 字（目标 ≥ 60000）")
+    # 旧口径把第五篇嵌入的 ~10 万字代码也算成“正文”，篇幅虚胖近一倍。
+    # 现口径：去掉所有 ``` 代码块后再计（仍 ≥60000 才算过）。
+    prose = re.sub(r"```.*?```", "", text, flags=re.S)
+    chars = len(re.sub(r"\s", "", prose))
+    check("A1-篇幅", chars >= 60000, f"正文去空白去代码 {chars} 字（目标 ≥ 60000）")
 
     heads = list(LECTURE_RE.finditer(text))
     check("A2-讲次数量", len(heads) == 20, f"检出 {len(heads)} 讲（目标 20）")
@@ -89,19 +140,24 @@ def verify_whitepaper() -> None:
         n = len(re.sub(r"\s", "", block))
         if n < 1200:
             thin.append(f"第{m.group(1)}讲({n}字)")
-        hits = [s for s in REQUIRED_SECTIONS if s in block]
-        # 标准原文：「20 讲每讲均含 6 个规定小节」。旧判定 ≥4 即放行，属放水。
+        # 小节必须以标题行存在（####/###），正文里顺口提到“数学”二字不算。
+        # 此前在整块内做子串匹配，标题被删、只剩正文提及也能蒙混过关。
+        heads_in = re.findall(r"^#{3,4}\s+(.*)$", block, re.M)
+        hits = [s for s in REQUIRED_SECTIONS if any(s in h for h in heads_in)]
+        # 标准原文：「20 讲每讲均含 6 个规定小节」。
         if len(hits) < len(REQUIRED_SECTIONS):
-            missing = "、".join(s for s in REQUIRED_SECTIONS if s not in block)
+            missing = "、".join(s for s in REQUIRED_SECTIONS
+                                if not any(s in h for h in heads_in))
             missing_sec.append(f"第{m.group(1)}讲缺：{missing}")
     check("A3-单讲篇幅", not thin, "过短：" + "、".join(thin) if thin else "全部 ≥1200 字")
     check("A4-小节完整", not missing_sec,
           "缺节：" + "、".join(missing_sec) if missing_sec else "20 讲均含规定小节")
 
     # 数字可溯：按"块"（段落 / 表格 / 列表项，以空行分隔）判定。
-    # 一个块内只要出现了百分比断言，就必须在同一块内带有可回溯的引用标注。
+    # 一个块内只要出现了百分比/倍数断言，就必须在同一块内带有可回溯的引用标注。
     # 严格之处：① 不接受"块里有 ［"这种形式合规；② 不允许任何配额（旧版容忍 5 处）；
-    #          ③ 标题/引注/短句不豁免（旧版 len(blk)<120 直接跳过，是后门）。
+    #          ③ 标题/引注/短句不豁免（旧版 len(blk)<120 直接跳过，是后门）；
+    #          ④ 规范原文是“百分比/倍数/CFD次数”，旧检查只查了百分比，本轮补上倍数。
     blocks = re.split(r"\n\s*\n", text)
     bare: list[str] = []
     in_fence = False
@@ -112,7 +168,7 @@ def verify_whitepaper() -> None:
             continue
         if in_fence:
             continue
-        if not re.search(r"\d+(?:\.\d+)?\s?%", blk):
+        if not re.search(r"\d+(?:\.\d+)?\s?(?:%|倍)", blk):
             continue
         if CITED_RE.search(blk):
             continue
@@ -138,10 +194,13 @@ def verify_whitepaper() -> None:
         body = tail[:nxt.start()] if nxt else tail
         n = len(re.sub(r"\s", "", body))
         has_matrix = "6.1" in body and "全景对比矩阵" in body
+        # 旧检查只认 6.1，6.2–6.5 被删光也能过；现要求 6.1–6.5 小节齐全。
+        subs = [s for s in ("6.1", "6.2", "6.3", "6.4", "6.5")
+                if re.search(r"^##\s+" + s, body, re.M)]
         placeholder = any(k in body for k in ("待重建", "待补", "TODO"))
-        ok = n >= 3000 and has_matrix and not placeholder
+        ok = n >= 3000 and has_matrix and len(subs) == 5 and not placeholder
         detail = (f"第六篇 {n} 字，矩阵={'有' if has_matrix else '无'}，"
-                  f"占位符={'有🔴' if placeholder else '无'}")
+                  f"小节{len(subs)}/5，占位符={'有🔴' if placeholder else '无'}")
         check("A6-篇完整性", ok, detail if ok else f"第六篇不达标（{detail}）")
 
 
@@ -186,6 +245,36 @@ def verify_code() -> None:
     tests = glob.glob(os.path.join(ROOT, "tests", "test_*.py"))
     check("B5-单元测试", len(tests) >= 3, f"{len(tests)} 个测试文件（目标 ≥3）")
 
+    # B4b/B5b：标准原文要求“pytest 全绿 + 每个脚本能跑出结果”。
+    # 旧检查只数字符串（有无 __main__、有几个测试文件）：本轮审计亲手复现过——
+    # 在 numpy 根本没装、19 项全挂的环境下，B 项照样 5/5 PASS。这是验收器最大的放水口。
+    # 现改为真跑：缺依赖时明确 FAIL 并提示 make venv，而不是虚假全绿。
+    import subprocess
+    try:
+        import numpy  # noqa: F401
+        have_numpy = True
+    except ImportError:
+        have_numpy = False
+    if os.environ.get("MRGUO_SKIP_SLOW"):
+        # 仅供 selftest_verifier 加速非B用例；直接跑 verify 永远全量真跑。
+        check("B4b-模块真跑", True, "SKIP（selftest加速模式，非B用例）")
+        check("B5b-测试真跑", True, "SKIP（selftest加速模式，非B用例）")
+    elif not have_numpy:
+        check("B4b-模块真跑", False, "numpy 未安装，code/ 自检无法运行（先 `make venv`）")
+        check("B5b-测试真跑", False, "numpy 未安装，tests/ 无法运行（先 `make venv`）")
+    else:
+        p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "run_checks.py"),
+                            "--modules"], cwd=ROOT, capture_output=True, text=True, timeout=600)
+        fails = [ln for ln in p.stdout.splitlines() if "[FAIL]" in ln]
+        check("B4b-模块真跑", p.returncode == 0 and not fails,
+              ("全部模块自检通过" if (p.returncode == 0 and not fails)
+               else f"模块自检失败：{'; '.join(fails[:3]) or p.stderr.strip().splitlines()[-1:] }"))
+        p = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q"], cwd=ROOT,
+                           capture_output=True, text=True, timeout=900)
+        tail = (p.stdout.strip().splitlines() or [""]) [-1]
+        check("B5b-测试真跑", p.returncode == 0,
+              f"pytest: {tail}" if p.returncode == 0 else f"pytest 未全绿：{tail}")
+
 
 # --------------------------------------------------------------------------- C
 def verify_images() -> None:
@@ -214,7 +303,10 @@ def verify_images() -> None:
         for m in re.finditer(r"!\[([^\]]*)\]\(\./images/([^)]+)\)", t):
             alt, fname = m.group(1), m.group(2)
             stem = os.path.splitext(fname)[0]
-            key = stem.replace("_zh", "").replace("_en", "")
+            # 只剥离行尾的 _zh/_en 后缀。旧写法 stem.replace("_en","") 会把
+            # 文件名中间的 "_en…"（如 vae_nurbs_endwall）一并误删，导致 C3 误报——
+            # 2026-09-06 第四轮补图时发现，已修。
+            key = re.sub(r"_(zh|en)$", "", stem)
             # 图注中的英文串应与文件名有实词交集
             words = {w.lower() for w in re.findall(r"[A-Za-z]{4,}", key)}
             altw = {w.lower() for w in re.findall(r"[A-Za-z]{4,}", alt)}
@@ -236,6 +328,20 @@ def verify_images() -> None:
         check("C4-四篇配图", not nofig,
               "这些篇没有配图：" + "、".join(nofig) if nofig else "第一至第四篇各有配图")
 
+        # C5：每一讲的“原理/难点讲解处”至少 1 张配图（2026-09-06 第四轮新口径，
+        #   见 docs/重建计划.md §八。既有 6 讲中英成对；2026-09-06 起按用户指示
+        #   新增图仅生成中文标注版——两种形态均计入。）
+        heads = list(LECTURE_RE.finditer(t))
+        noimg = []
+        for i, m in enumerate(heads):
+            s = m.end()
+            e = heads[i + 1].start() if i + 1 < len(heads) else len(t)
+            if not IMAGE_REF_RE.search(t[s:e]):
+                noimg.append(f"第{m.group(1)}讲")
+        check("C5-每讲配图", not noimg,
+              "这些讲没有配图：" + "、".join(noimg) if noimg
+              else f"20/20 讲均至少 1 张配图（共 {t.count('./images/')} 处引用）")
+
 
 # --------------------------------------------------------------------------- D
 def verify_consistency() -> None:
@@ -251,11 +357,40 @@ def verify_consistency() -> None:
             bad.append(f"P{p['id']}({dec}≠{got})")
     check("D1-DOI一致", not bad, "DOI 冲突未修正：" + "、".join(bad) if bad else "20 篇 DOI 与原文一致")
 
+    # D1b：curated 年份/载体必须与裁定值一致。旧检查只比 DOI，不管年份/载体——
+    # 本轮审计发现 index.json 里 P02 年份被嗅探成 2016（实 2021）、P15 载体被嗅探成
+    # Engineering Optimization（实 IEEE CEC），且演示程序曾把错值当结论展示。
+    bad_cur = []
+    for p in papers:
+        exp = CURATED_EXPECT.get(p["id"])
+        got = (p.get("curated_year"), p.get("curated_venue"))
+        if exp != got:
+            bad_cur.append(f"P{p['id']}(index={got}≠curation={exp})")
+    check("D1b-年份载体", not bad_cur,
+          "curated 与裁定不一致：" + "、".join(bad_cur[:4]) if bad_cur else "20 篇 curated 年份/载体与裁定一致")
+
     readme = open(README, encoding="utf-8").read()
     ids = re.findall(r"\|\s*\*\*(\d{2})\*\*\s*\|", readme)
     uniq = sorted(set(ids))
     check("D2-编号唯一", len(uniq) == 20 and len(ids) == 20,
           f"README 索引表检出 {len(ids)} 行 / {len(uniq)} 个唯一编号（目标 20/20）")
+
+    # D2b：目标 D 要求“全仓库统一 01–20”，旧检查只看了 README 索引表。
+    # 2026-09-06 合并后编号体系升级为标题级【论文 XX】标签（原“规范编号 **NN**”后缀式已淘汰）：
+    # 公开 15 篇 + 付费 5 篇 = 20，全集 §三 20 张卡片标题全部带【论文 XX】。
+    d2b_bad = []
+    tag_re2 = re.compile(r"【论文\s*(\d{2})】")
+    open_tags = set(tag_re2.findall(open(os.path.join(ROOT, "公开论文整理.md"), encoding="utf-8").read()))
+    if len(open_tags) != 15:
+        d2b_bad.append(f"公开论文整理【论文 XX】标签 {len(open_tags)} 个（目标 15）")
+    pay_tags = set(tag_re2.findall(open(os.path.join(ROOT, "付费论文五篇整理.md"), encoding="utf-8").read()))
+    if len(pay_tags) != 5:
+        d2b_bad.append(f"付费论文五篇整理【论文 XX】标签 {len(pay_tags)} 个（目标 5）")
+    quan_txt = open(os.path.join(ROOT, "郭老师论文全集综合整理汇总.md"), encoding="utf-8").read()
+    n_head = len(re.findall(r"^#### \d+\.\s*【论文 \d{2}】", quan_txt, re.M))
+    if n_head != 20:
+        d2b_bad.append(f"全集 #### 标题带【论文 XX】{n_head}/20")
+    check("D2b-编号落地", not d2b_bad, "；".join(d2b_bad) if d2b_bad else "公开15+付费5=全集20，标题级【论文 XX】齐全")
 
     wp = open(WHITEPAPER, encoding="utf-8").read()
     check("D3-口径统一", ("15+5" not in wp),
@@ -266,11 +401,23 @@ def verify_consistency() -> None:
     #   (b) 已被裁定为硬伤的字符串不得在任何文档中复现（回归守卫）。
     link_doc = os.path.join(ROOT, "论文链接整理.md")
     link_txt = open(link_doc, encoding="utf-8").read() if os.path.exists(link_doc) else ""
-    missing_doi = [f"P{p['id']}:{p['doi']}" for p in papers
-                   if p.get("doi") and p["doi"] not in link_txt]
+    # 旧判定只查“从 PDF 抽到的 DOI”，5 篇无本地原文的论文（04/05/13/14/20）因此**从未被检查**——
+    # 论文 14/20 长期“无 DOI”正是这样漏网的。现改为：20 篇的 DOI（抽取值优先，否则取
+    # extract_corpus.PAPER_MAP 的声明值）都必须落到《论文链接整理.md》（DOI 比对不区分大小写）。
+    summary_doc = os.path.join(ROOT, "郭老师论文全集综合整理汇总.md")
+    summary_txt = (open(summary_doc, encoding="utf-8").read().lower()
+                   if os.path.exists(summary_doc) else "")
+    missing_doi = []
+    for p in papers:
+        doi = p.get("doi") or p.get("declared_doi")
+        if not doi:
+            missing_doi.append(f"P{p['id']}:无DOI")
+            continue
+        if doi.lower() not in link_txt.lower() or doi.lower() not in summary_txt:
+            missing_doi.append(f"P{p['id']}:{doi}")
     check("D4a-DOI落地", not missing_doi,
-          "《论文链接整理.md》缺少已确证的 DOI：" + "、".join(missing_doi[:6])
-          if missing_doi else "20 篇已确证 DOI 全部落到索引文档")
+          "索引文档（链接整理/全集汇总）缺少 DOI：" + "、".join(missing_doi[:6])
+          if missing_doi else "20/20 篇 DOI（含 5 篇无本地原文者）均落到链接整理与全集汇总")
 
     # 允许"辟谣式引用"：错误串若出现在 更正/旧版/错误/无此说法/虚构/应为 等语境中，
     # 说明是在记录"这里曾经错、现在改了"，属正当用途；否则即为残留。
@@ -298,6 +445,53 @@ def verify_consistency() -> None:
                             for h in hits for b, _ in FORBIDDEN if h.endswith(b))
         detail = "已裁定的错误仍以正文口径存在 → " + (reasons or "；".join(hits[:4]))
     check("D4b-无禁用残留", not hits, detail)
+
+    # D5：事实卡 P09 §四明令——“14.0% 必须连同工况限定语 MA=0.8 一起引用，
+    # 脱离马赫数写‘降低 14.0%’属过度泛化”。本轮审计在全集/白皮书各抓到一处违反。
+    # 检查：全仓库（去代码块）每个 14.0% 的 ±300 字符窗口内必须有 MA/马赫数限定。
+    MA_RE = re.compile(r"MA\s?[=＝]\s?\$?0\.8|Ma\s?[=＝]\s?\$?0\.8|0\.8\s?工况|马赫数\s?0\.8|"
+                       r"Mach\s?(number of )?0\.8|出口马赫数", re.I)
+    d5_bad = []
+    for path in scan_targets:
+        if not os.path.exists(path):
+            continue
+        body = re.sub(r"```.*?```", "", open(path, encoding="utf-8").read(), flags=re.S)
+        for mt in re.finditer(r"14\.0\s?%", body):
+            ctx = body[max(0, mt.start() - 300):mt.end() + 100]
+            if not MA_RE.search(ctx):
+                line = body[:mt.start()].count("\n") + 1
+                d5_bad.append(f"{os.path.basename(path)}:{line}")
+                break
+    check("D5-工况限定", not d5_bad,
+          "14.0% 脱离 MA=0.8 限定（过度泛化）：" + "、".join(d5_bad) if d5_bad
+          else "全部 14.0% 均带 MA=0.8 工况限定")
+
+    # D6：规范编号必须贯穿全部索引文档（目标 D「统一 01–20 编号」）。
+    #   （合并说明：该检查在独立复审分支上原名 D5-规范编号贯穿；与本仓 D5-工况限定 撞号，
+    #    合并后统一改为 D6，selftest_verifier 的对应用例同步改名。）
+    #   旧状态：全集 §三 卡片、公开/付费/链接整理只有“文内顺序号”，读者无法把
+    #   “公开论文整理的第 9 篇”对应到“白皮书第 11 讲 / 论文 12”。
+    #   现判定：① 全集汇总 §三 与《论文链接整理》各自含全部 20 个 ［论文 XX］ 标签；
+    #           ② 《公开论文整理》∪《付费论文五篇整理》恰好覆盖 20 个编号且两者不重叠。
+    tag_re = re.compile(r"【论文\s*(\d{2})】")
+    all20 = {f"{i:02d}" for i in range(1, 21)}
+
+    def tags(path: str) -> set[str]:
+        return set(tag_re.findall(open(path, encoding="utf-8").read())) if os.path.exists(path) else set()
+
+    pub = tags(os.path.join(ROOT, "公开论文整理.md"))
+    paid = tags(os.path.join(ROOT, "付费论文五篇整理.md"))
+    problems = []
+    for name, got in (("全集汇总", tags(summary_doc)), ("链接整理", tags(link_doc))):
+        if got != all20:
+            problems.append(f"{name}缺 {sorted(all20 - got)}")
+    if pub | paid != all20:
+        problems.append(f"公开∪付费缺 {sorted(all20 - (pub | paid))}")
+    if pub & paid:
+        problems.append(f"公开∩付费重叠 {sorted(pub & paid)}")
+    check("D6-规范编号贯穿", not problems,
+          "；".join(problems) if problems
+          else f"四份索引文档均按【论文 XX】贯穿 20 篇（公开 {len(pub)} + 付费 {len(paid)}）")
 
 
 # --------------------------------------------------------------------------- E
@@ -336,15 +530,31 @@ def verify_skills() -> None:
               else "README 缺少 `core.py --demo` 端到端命令")
 
     # E4：那条端到端命令必须真的能跑（不依赖网络；无语料时应干净降级而非 traceback）。
+    # 旧判定只数行数（≥20 即过）：本轮审计复现过——语料完全缺失时的 58 行降级输出
+    # 与完整语料下的 106 行输出都 PASS，裁判根本区分不了“真跑通”与“降级跑通”。
+    # 现分模式判定并如实报告模式。
     import subprocess
+    txt_dir = os.path.join(CORPUS, "txt")
+    has_corpus = os.path.isdir(txt_dir) and any(
+        f.endswith(".txt") for f in os.listdir(txt_dir))
     try:
         p = subprocess.run([sys.executable, core, "--demo"], cwd=ROOT,
                            capture_output=True, text=True, timeout=180)
         out = (p.stdout or "") + (p.stderr or "")
-        ok = p.returncode == 0 and "Traceback" not in out and len(out.splitlines()) >= 20
-        check("E4-演示可运行", ok,
-              f"--demo 退出码 {p.returncode}，输出 {len(out.splitlines())} 行"
-              + ("" if ok else "（需退出码 0、无 traceback、有实质输出）"))
+        nlines = len(out.splitlines())
+        if has_corpus:
+            # 完整模式：必须有可回溯的正文证据（“字符 [a:b]”引用），而不只是 DOI 表格。
+            n_ev = len(re.findall(r"字符\s*\[\d+:\d+\]", out))
+            ok = p.returncode == 0 and "Traceback" not in out and n_ev >= 3
+            check("E4-演示可运行", ok,
+                  f"--demo 完整模式：退出码 {p.returncode}，{nlines} 行，正文回溯证据 {n_ev} 条"
+                  + ("" if ok else "（需退出码 0、无 traceback、≥3 条正文回溯证据）"))
+        else:
+            ok = (p.returncode == 0 and "Traceback" not in out
+                  and "一次性准备" in out and nlines >= 20)
+            check("E4-演示可运行", ok,
+                  f"--demo 降级模式（corpus/txt 缺失）：退出码 {p.returncode}，{nlines} 行"
+                  + ("" if ok else "（需退出码 0、无 traceback、含修复指引、有实质输出）"))
     except Exception as e:  # noqa: BLE001
         check("E4-演示可运行", False, f"无法执行 --demo：{type(e).__name__}: {e}")
 
@@ -365,9 +575,18 @@ def verify_hygiene() -> None:
     check("F1a-事实卡无TODO", not todo_cards,
           f"{len(todo_cards)} 张仍是骨架：" + "、".join(todo_cards[:6])
           if todo_cards else f"{len(cards)}/20 张已依原文填写")
-    check("F1b-事实卡栏目齐", not thin_cards and len(cards) == 20,
-          f"栏目不足 7 节：" + "、".join(thin_cards[:6]) if thin_cards
-          else f"{len(cards)} 张、每张 ≥7 栏（目标 20）")
+    # F1b 旧检查只数 “## ”个数（≥7 即过）：栏名写成“占位一、占位二…”也能过。
+    # 现要求 7 类规定栏目（权威著录/摘要/量化指标/方法机理/验证/局限/承前启后）齐全。
+    bad_sec = []
+    for c in cards:
+        heads = " ".join(re.findall(r"^##\s+(.*)$", open(c, encoding="utf-8").read(), re.M))
+        miss = [s for s in FACT_SECTIONS if s not in heads]
+        if miss:
+            bad_sec.append(f"{os.path.basename(c)}缺{','.join(miss)}")
+    check("F1b-事实卡栏目齐", not thin_cards and not bad_sec and len(cards) == 20,
+          ("栏目不足 7 节：" + "、".join(thin_cards[:6]) if thin_cards
+           else "栏目名不符：" + "、".join(bad_sec[:4])) if (thin_cards or bad_sec)
+          else f"{len(cards)} 张、每张 7 类规定栏目齐全（目标 20）")
 
     # F2：计划中点名要求、但曾缺失的交付物。
     need = {"Makefile": "P3 要求的 Makefile",
@@ -394,6 +613,29 @@ def verify_hygiene() -> None:
     check("F3-抽取依赖已声明", not heavy,
           "第三方依赖未在 requirements 中声明：" + "、".join(heavy)
           if heavy else "pypdf 已在 tools/requirements.txt 声明（code/ 仍仅 numpy）")
+
+    # F4：白皮书是派生物，必须与 docs/lectures + code/ 源一致。
+    # 旧验收完全不查这一项：直接改白皮书（或改了讲稿忘装配）都能 PASS，
+    # 下次装配即丢改动。现备份→重装配→比对→恢复，全程不污染工作区。
+    # （build 已改为确定性时间戳，故可逐字节比对。）
+    import shutil
+    import subprocess
+    import tempfile
+    wp_path = WHITEPAPER
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            bak = os.path.join(td, "wp.bak.md")
+            shutil.copy2(wp_path, bak)
+            p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "build_whitepaper.py")],
+                               cwd=ROOT, capture_output=True, text=True, timeout=120)
+            same = (p.returncode == 0
+                    and open(wp_path, "rb").read() == open(bak, "rb").read())
+            shutil.copy2(bak, wp_path)  # 无论如何恢复，避免 verify 污染工作区
+        check("F4-白皮书源一致", same,
+              "白皮书与讲稿/代码源逐字节一致" if same
+              else "白皮书与源不一致（改了讲稿/code 后请重跑 make whitepaper；或有人直接改了白皮书）")
+    except Exception as e:  # noqa: BLE001
+        check("F4-白皮书源一致", False, f"一致性检查无法执行：{type(e).__name__}: {e}")
 
 
 

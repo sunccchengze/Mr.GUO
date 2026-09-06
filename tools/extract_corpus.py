@@ -3,7 +3,7 @@
 """
 extract_corpus.py —— Mr.GUO 本地文献语料抽取管线
 =============================================================================
-用途：把 `郭老师论文/` 下的 13 篇 PDF + 2 篇 ScienceDirect HTML 全文/元数据，
+用途：把 `郭老师论文/` 下的 13 篇 PDF 全文 + 2 篇 ScienceDirect HTML 摘要页（仅摘要与元数据），
       抽取为可检索的纯文本语料与结构化元数据，作为白皮书重建的唯一事实底座。
 
 设计原则（针对上一版"凭空编造数字"的问题）：
@@ -55,16 +55,48 @@ PAPER_MAP = [
     ("11", "A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems.pdf", "pdf", "10.1080/0305215X.2024.2325651"),
     ("12", "ssrn-4869789.pdf",                              "pdf",  "10.2139/ssrn.4869789"),
     ("13", None,                                            "none", "10.1115/1.4064228"),
-    ("14", None,                                            "none", None),
-    ("15", "AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf", "pdf", None),
+    # 2026-09-06 二次核验：Crossref 可直接命中（proceedings-article，GT2024-128792，
+    # 文章号 V12DT34A025），旧版"Crossref 未命中"为误判。
+    ("14", None,                                            "none", "10.1115/GT2024-128792"),
+    ("15", "AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf", "pdf", "10.1109/CEC65147.2025.11043110"),
     ("16", "1-s2.0-S1000936125000792-main.pdf",             "pdf",  "10.1016/j.cja.2025.103473"),
     ("17", "1-s2.0-S1270963826007042-main.pdf",             "pdf",  "10.1016/j.ast.2026.112324"),
     # DOI 已按 corpus/doi_verification.md 修正：旧值 ...112440 指向一篇与本团队无关的
     # GCN 论文（AST 178 Part B），正确文章号为 112351。
     ("18", "1-s2.0-S1270963826007315-main.pdf",             "pdf",  "10.1016/j.ast.2026.112351"),
     ("19", "1-s2.0-S1000936126003122-main.pdf",             "pdf",  "10.1016/j.cja.2026.104374"),
-    ("20", None,                                            "none", None),
+    # 2026-09-06 二次核验：Proc. SPIE 14253 (HARCT 2026), 142530E；旧版"SPIE 未开放索引"为误判。
+    ("20", None,                                            "none", "10.1117/12.3117536"),
 ]
+
+# ---------------------------------------------------------------------------
+# 人工裁定（curated）的年份与发表载体：sniff_metadata() 的启发式嗅探会误抓
+# （如 P02 首页引用年份 2016、P15 参考文献中的期刊名），且无原文的 5 篇嗅探不到。
+# 下表依据 corpus/doi_verification.md 与事实卡著录人工裁定，是年份/载体的唯一口径：
+#   年份 = 首次正式发表年（在线优先）；P11 在线 2024，正式卷期 2025, 57(2)。
+# ---------------------------------------------------------------------------
+CURATED_META = {
+    "01": (2021, "Structural and Multidisciplinary Optimization"),
+    "02": (2021, "Structural and Multidisciplinary Optimization"),
+    "03": (2021, "International Journal of Heat and Mass Transfer"),
+    "04": (2021, "ASME Journal of Turbomachinery"),
+    "05": (2021, "ASME Journal of Turbomachinery"),
+    "06": (2023, "IEEE Transactions on Cybernetics"),
+    "07": (2023, "Aerospace Science and Technology"),
+    "08": (2024, "Aerospace Science and Technology"),
+    "09": (2024, "Aerospace Science and Technology"),
+    "10": (2024, "International Journal of Heat and Fluid Flow"),
+    "11": (2024, "Engineering Optimization"),
+    "12": (2024, "SSRN Preprint"),
+    "13": (2024, "ASME Journal of Turbomachinery"),
+    "14": (2024, "ASME Turbo Expo"),
+    "15": (2025, "IEEE Congress on Evolutionary Computation (CEC)"),
+    "16": (2025, "Chinese Journal of Aeronautics"),
+    "17": (2026, "Aerospace Science and Technology"),
+    "18": (2026, "Aerospace Science and Technology"),
+    "19": (2026, "Chinese Journal of Aeronautics"),
+    "20": (2026, "SPIE Conference"),
+}
 
 # 按文件名唯一化（防御性：同一文件被误配两次时只抽一次）
 _SEEN = set()
@@ -147,6 +179,26 @@ def read_html(path: str) -> tuple[str, dict]:
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+")
 
 
+_YEAR = r"(20[0-2]\d)"
+# 年份嗅探按“出版语义”排优先级，而不是取首页第一个 20xx（旧逻辑曾把 P02 参考文献里的 2016 当成出版年）。
+_YEAR_RULES = [
+    re.compile(r"(?:Available\s*online|Published\s*online|First\s*published|Published)[^\n]{0,60}?" + _YEAR, re.I),
+    re.compile(r"VOL\.[^\n]{0,60}?" + _YEAR),                     # IEEE 卷期行：VOL. 53, NO. 7, JULY 2023
+    re.compile(r"(?:©|Copyright)[^\n]{0,120}?" + _YEAR),
+    re.compile(r"Accepted[^\n]{0,60}?" + _YEAR, re.I),
+]
+
+
+def sniff_year(head: str) -> str | None:
+    """从首页文本嗅探出版年：在线发表/卷期/版权/录用 依次兜底，最后才退回“首个孤立的 20xx”。"""
+    for rule in _YEAR_RULES:
+        m = rule.search(head)
+        if m:
+            return m.group(1)
+    m = re.search(r"(?<!\d)" + _YEAR + r"(?!\d)", head)
+    return m.group(1) if m else None
+
+
 def sniff_metadata(text: str, fallback_doi: str | None) -> dict:
     """从首页文本中尽力嗅探元数据；嗅探不到的字段保持 None。"""
     head = text[:6000]
@@ -158,9 +210,7 @@ def sniff_metadata(text: str, fallback_doi: str | None) -> dict:
     elif fallback_doi:
         out["doi"] = fallback_doi
 
-    years = re.findall(r"\b(20[0-2]\d)\b", head)
-    if years:
-        out["year_hint"] = years[0]
+    out["year_hint"] = sniff_year(head)
 
     # 期刊线索：常见刊名
     for name in ("Aerospace Science and Technology", "Chinese Journal of Aeronautics",
@@ -220,6 +270,7 @@ def main() -> int:
                 "id": pid, "file": None, "kind": "none", "pages": None,
                 "doi": None, "declared_doi": doi, "journal_hint": None,
                 "year_hint": None, "title_hint": None, "has_fulltext": False,
+                "curated_year": CURATED_META[pid][0], "curated_venue": CURATED_META[pid][1],
                 "chars": 0, "numeric_claims": [],
                 "note": "无本地原文，需网络检索补全（见 corpus/web_evidence/）",
             })
@@ -236,6 +287,7 @@ def main() -> int:
             record = {
                 "id": pid, "file": fname, "kind": "pdf", "pages": npages,
                 "doi": meta["doi"], "declared_doi": doi,
+                "curated_year": CURATED_META[pid][0], "curated_venue": CURATED_META[pid][1],
                 "journal_hint": meta["journal_hint"],
                 "year_hint": meta["year_hint"], "title_hint": meta["title_hint"],
                 "has_fulltext": len(text) > 20000,
@@ -245,6 +297,7 @@ def main() -> int:
             record = {
                 "id": pid, "file": fname, "kind": "html", "pages": None,
                 "doi": hmeta.get("citation_doi"), "declared_doi": doi,
+                "curated_year": CURATED_META[pid][0], "curated_venue": CURATED_META[pid][1],
                 "journal_hint": hmeta.get("citation_journal_title"),
                 "year_hint": (hmeta.get("citation_publication_date") or "")[:4] or None,
                 "title_hint": hmeta.get("citation_title"),
@@ -265,8 +318,28 @@ def main() -> int:
             f"fulltext={record['has_fulltext']}")
 
     index.sort(key=lambda r: r["id"])
+    # 确定性内容戳：原文目录的内容哈希，而非“此刻”（mtime 经不起 touch）。
+    # 否则每次重跑 index.json 都会变脏，破坏“可复现”承诺。
+    import hashlib
+    h = hashlib.sha256()
+    try:
+        names = sorted(os.listdir(PAPER_DIR))
+    except OSError:
+        names = []
+    for f in names:
+        if f.startswith("."):
+            continue
+        try:
+            with open(os.path.join(PAPER_DIR, f), "rb") as fh:
+                while True:
+                    blk = fh.read(1 << 20)
+                    if not blk:
+                        break
+                    h.update(blk)
+        except OSError:
+            pass
     out = {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": "src-" + h.hexdigest()[:12],
         "generator": "tools/extract_corpus.py",
         "papers": index,
     }

@@ -271,6 +271,11 @@ class OmniScholarEngine:
             return "A（本地有全文，可逐句回溯）"
         if p.get("kind") == "html":
             return "B（仅摘要级 HTML）"
+        # 无本地文件：若 corpus/web_evidence/PXX.md 已登记权威著录与出版商摘要，则为 B；
+        # 只有连 DOI/摘要都没有时才是 C（截至 2026-09-06 全集已无此类条目）。
+        if p.get("declared_doi") and os.path.exists(
+                os.path.join(ROOT, "corpus", "web_evidence", f"P{pid}.md")):
+            return "B（无本地原文；DOI 与出版商摘要已核验，见 corpus/web_evidence/）"
         return "C（仅公开线索，无本地原文）"
 
     # ---------------------------------------------------------------- 1) DOI 核验
@@ -287,8 +292,12 @@ class OmniScholarEngine:
                 sniffed = m.group(0).rstrip(".,;")
         if verified and declared and declared != verified:
             status, note = "冲突", "⚠ 文档声明值与核验值不一致，已按 corpus/doi_verification.md 修正"
+        elif not verified and declared:
+            status, note = ("出版商核验",
+                            "本地无原文，无法从正文嗅探；声明值来自 Crossref/出版商页面核验"
+                            "（见 corpus/doi_verification.md 与 corpus/web_evidence/）")
         elif not verified:
-            status, note = "未核验", "本地无原文，未取得可核验的 DOI（不等于错误）"
+            status, note = "未核验", "本地无原文，且未取得可核验的 DOI"
         elif not declared:
             status, note = "仅核验值", "旧文档未登记 DOI，现有值为本次核验结果"
         else:
@@ -299,7 +308,7 @@ class OmniScholarEngine:
             "declared_doi": declared,
             "verified_doi": verified,
             "in_text_doi": sniffed,
-            "declared_matches_verified": (status in ("一致", "仅核验值")),
+            "declared_matches_verified": (status in ("一致", "仅核验值", "出版商核验")),
             "verified_matches_in_text": (sniffed is None) or (sniffed == verified),
             "has_fulltext": bool(p.get("has_fulltext")),
             "txt_file": p.get("txt"),
@@ -382,7 +391,13 @@ class OmniScholarEngine:
 
     # ---------------------------------------------------------------- 3) 演进拓扑
     def build_evolution_topology(self) -> Dict[str, Any]:
-        """按**真实年份**排代 + 方法关键词共现 + 共同作者，构建跨文献拓扑。"""
+        """按**裁定年份**排代 + 方法关键词共现 + 共同作者，构建跨文献拓扑。
+
+        年份/载体取 index.json 的 curated_year/curated_venue（人工按出版商页面裁定，
+        20 篇全覆盖），而不取 year_hint/journal_hint——后者是启发式嗅探，曾把 P02
+        误标为 2016、把 P15 的载体误标为 Engineering Optimization，且无原文的
+        5 篇嗅探不到会被静默丢弃。
+        """
         rows = []
         for pid in self.paper_ids():
             body = self.text(pid)
@@ -391,8 +406,8 @@ class OmniScholarEngine:
             p = self.papers[pid]
             rows.append({
                 "id": pid,
-                "year": p.get("year_hint"),
-                "venue": p.get("journal_hint"),
+                "year": p.get("curated_year") or p.get("year_hint"),
+                "venue": p.get("curated_venue") or p.get("journal_hint"),
                 "has_fulltext": bool(p.get("has_fulltext")),
                 "methods": methods,
             })
@@ -421,8 +436,8 @@ class OmniScholarEngine:
             "timeline_by_year": timeline,
             "methods_per_paper": {f"P{r['id']}": r["methods"] for r in rows},
             "method_cooccurrence_top": cooccurrence[:15],
-            "note": ("拓扑完全由 corpus/ 中的真实文本统计得出：年份取 index.json 的 year_hint，"
-                     "方法命中取正文正则匹配。未做任何人工归类。"),
+            "note": ("年份/载体取 index.json 的 curated 字段（人工按出版商页面裁定，见 "
+                     "tools/extract_corpus.py 的 CURATED_META），方法命中取正文正则匹配。"),
         }
 
     # ---------------------------------------------------------------- 4) 跨文献互证
@@ -493,7 +508,8 @@ class OmniScholarEngine:
         lines.append(f"| 证据等级 | {self.evidence_level(pid)} |")
         lines.append(f"| 期刊线索 | {p.get('journal_hint') or '未嗅探到'} |")
         lines.append(f"| 年份线索 | {p.get('year_hint') or '未嗅探到'} |")
-        lines.append(f"| 核验 DOI | `{doi['verified_doi'] or '未获取'}` |")
+        lines.append(f"| 核验 DOI | `{doi['verified_doi'] or doi['declared_doi'] or '未获取'}`"
+                     f"{'（出版商/Crossref 核验，正文不可嗅探）' if not doi['verified_doi'] and doi['declared_doi'] else ''} |")
         lines.append(f"| 正文内 DOI | `{doi['in_text_doi'] or '未嗅探到'}` |")
         lines.append(f"| 语料字符数 | {p.get('chars')} |")
         lines.append(f"| 语料文件 | `{p.get('txt') or '无'}` |")
@@ -568,13 +584,14 @@ def _demo(engine: OmniScholarEngine) -> int:
     bad = []
     for pid in engine.paper_ids():
         r = engine.verify_doi(pid)
-        flag = "OK " if r["status"] == "一致" else ("?! " if r["status"] == "未核验" else "!! ")
+        flag = ("OK " if r["status"] in ("一致", "出版商核验")
+                else ("?! " if r["status"] == "未核验" else "!! "))
         if r["status"] == "冲突":
             bad.append(f"P{pid}")
         print(f"  {flag}P{pid} [{r['status']}]: 声明={r['declared_doi']} | "
               f"核验={r['verified_doi']} | 正文={r['in_text_doi']}")
     print(f"  → 真正冲突的篇目：{bad if bad else '无'}"
-          f"（标 ?! 者为无本地原文、无法核验，不等于错误）")
+          f"（标 OK[出版商核验] 者为无本地原文、DOI 经 Crossref/出版商页面核验；标 ?! 者为既无原文也无 DOI）")
 
     print("\n【3】四维骨架抽取示例（取一篇正文已抽取的论文）")
     target = next((p for p in engine.paper_ids() if engine.has_text(p)), None)
