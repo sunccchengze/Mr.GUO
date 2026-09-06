@@ -5,7 +5,7 @@
 
 | 函数 / 类 | 对应论文 | 说明 |
 | :--- | :--- | :--- |
-| `CoKriging` | 论文 02 / 03 / 05 / 08 / 13 | 自回归（AR1）Co-Kriging：y_HF = ρ·y_LF + Z_DF |
+| `CoKriging` | 论文 02（原文结构）；论文 17 以之为对比基线；论文 13 的 MFS 属同类但公式未获取 | 自回归（AR1）Co-Kriging：y_HF = ρ·y_LF + Z_DF |
 | `filter_gei_threshold` | **论文 02（Filter-GEI）式 10–12** | 自适应权重 ω 与分流阈值 T 的**原文公式** |
 | `hierarchical_decluster` | **论文 02** 第四步 | 层次聚类去掉重叠候选点 |
 | `fidelity_split` | **论文 02** 第 6 步 | 预测优于 T 的送 HF，其余送 LF |
@@ -134,10 +134,12 @@ class _TinyKriging:
 class CoKriging:
     """自回归（AR1）Co-Kriging：y_HF(x) = ρ·y_LF(x) + Z_DF(x)。
 
-    这是本全集出现次数最多的多保真结构：
-      * 论文 02（Filter-GEI）用它做代理，并由 σ²_DF / σ²_LF 决定滤波阈值；
-      * 论文 13（EMFS）把它作为"会被换掉"的 MFS；
-      * 论文 08（KT-ASO）把**历史任务的样本**当作 LF，用同一个结构做知识迁移。
+    本全集中与之直接对应的论文：
+      * 论文 02（Filter-GEI）用它做代理，并由 σ²_DF / σ²_LF 决定滤波阈值［原文 P02 §2–3］；
+      * 论文 17（GTO）把"co-kriging 型 MFS"作为与 EMFS 对照的多保真基线［原文 P17 §4］；
+      * 论文 13（EMFS/MSFO）以某种 MFS 为底、在失真区改建 SFS，但其 MFS 具体公式未获取
+        ［出版商页面 摘要，论文 13］；论文 08（KT-ASO）用"含相关系数 ρ 的多保真代理"
+        把源任务样本当作低保真信息［原文 P08 术语表/§3.3］，与 AR1 形式一致但细节以原文为准。
 
     用法：
         ck = CoKriging().fit(X_lf, y_lf, X_hf, y_hf)

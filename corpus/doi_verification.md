@@ -3,7 +3,7 @@
 > **生成方式：** 由 `tools/extract_corpus.py` 从本地 PDF/HTML **原文第一页**机械抽取 DOI，
 > 与仓库文档（README / 全集汇总 / 公开论文整理 / 付费论文五篇整理 / 论文链接整理）中**声称的 DOI** 自动比对，
 > 冲突项再经网络检索（Crossref 收录方页面、出版商页面、引用该文的第三方文献）人工裁定。
-> **核查日期：** 2026-09-05
+> **核查日期：** 2026-09-05；**2026-09-06 二次核验**（Crossref API 逐条重查 20 篇，修正 P14 / P20 两条"未获 DOI"误判，并补记 P05 / P12 作者与出版状态）
 > **原则：** 以「原文印刷的 DOI」为一审证据，以「出版商页面」为二审证据；两者冲突时以出版商页面为准并在备注中说明。
 
 ## 一、总表
@@ -23,15 +23,15 @@
 | 11 | DA-EGO | `10.1080/0305215X.2024.2325651` | 同左 | ✅ 一致 | 但**年份/讲次标注有误**，见下 |
 | 12 | SDNO | `10.2139/ssrn.4869789` | 未检出（PDF 无 DOI 行） | ⚠️ 沿用文档 | 标注为 SSRN 预印本 |
 | 13 | EMFS / MSFO | `10.1115/1.4064228` | 无本地原文 | ✅ 外部确认 | 见 `web_evidence/P13.md` |
-| 14 | GAN-Endwall | 无 | 无本地原文 | ⚠️ 未获 DOI | 见 `web_evidence/P14.md` |
+| 14 | VAE-NURBS 端壁参数化 | 无 | 无本地原文；**Crossref 命中** `10.1115/GT2024-128792` | ✅ 外部确认（2026-09-06 补） | 旧版"Crossref 未命中"为误判；见 `web_evidence/P14.md` |
 | 15 | AI-PJP | 无（仅写 "IEEE 检索"） | `10.1109/CEC65147.2025.11043110` | ❌ **文档年份错** | IEEE CEC **2025**，非 2024 |
 | 16 | TNO | `10.1016/j.cja.2025.103473` | 同左 | ✅ 一致 | — |
 | 17 | GTO | `10.1016/j.ast.2026.112324` | 同左 | ✅ 一致 | — |
 | 18 | ResUNet-Sim | `10.1016/j.ast.2026.112440` | `10.1016/j.ast.2026.112351` | ❌ **文档 DOI 指向无关论文** | 全文替换 |
 | 19 | SHAP-Turbine | `10.1016/j.cja.2026.104374` | 同左 | ✅ 一致 | — |
-| 20 | SPIE-AI | 无 | 无本地原文 | ⚠️ 未获 DOI | 见 `web_evidence/P20.md` |
+| 20 | 子午面全景预测（HARCT 2026） | 无 | 无本地原文；**Crossref 命中** `10.1117/12.3117536` | ✅ 外部确认（2026-09-06 补） | Proc. SPIE 14253, 142530E；旧版"SPIE 未开放索引"为误判；见 `web_evidence/P20.md` |
 
-**统计：20 篇中 3 篇存在实质性错误（15%），1 篇待补 DOI，2 篇仅有公开线索。**
+**统计：20 篇中 3 篇存在实质性错误（15%）；二次核验后 20 篇 DOI 全部落实，不再有"待补 DOI"条目（P14 / P20 的旧版"未检索到"系检索失误）。**
 
 ## 二、三处硬伤详述
 
@@ -64,7 +64,10 @@
 | 论文编号三套并行 | README/全集用 01–20；白皮书按主题重排，其"第10讲"实为 16 号 TNO | 统一 01–20 为唯一编号，讲次与之并列标注 |
 | 篇数口径混乱 | 同一文档内同时出现"15 篇""20 篇""15+5 篇" | 统一为「本地有原文 15 篇 / 全集 20 篇」 |
 | P13 算法命名 | 白皮书第 05 讲标题称"**EMFS 算法**" | 原文：代理模型叫 **EMFS**（ensemble weighted multi-fidelity surrogate），配套优化算法叫 **MSFO**（multi- and single-fidelity surrogate fused optimization）。二者不可混用 |
-| P12 SDNO 状态 | 文档标 "SSRN / Elsevier 2024" | 实际为 SSRN 预印本（2024-01），作者序 Wang, Song, Liu, Guo（郭老师为通讯作者） |
+| P12 SDNO 状态 | 文档标 "SSRN / Elsevier 2024" | 本地 PDF 为 SSRN 预印本（`10.2139/ssrn.4869789`，2024-06-14 提交），作者序 Wang, Song, Liu, Guo（郭老师为通讯作者）。**2026-09-06 补记**：同一工作的正式版已发表——*Physics of Fluids* **36**(12): 126110, 2024-12-04, DOI `10.1063/5.0239483`，题名微调为 "Enhancing generalization in endwall film cooling prediction: Incorporating the superposition principle into transformer-based neural operators"（Crossref）。本仓库全文引用仍以本地预印本为准（正式版未获取），但著录处应并列注明正式版 DOI |
+| P05 作者序 | 旧版各处写 "Zhendong Guo, Liming Song, Jun Li, et al."，事实卡称"郭老师为第一作者" | **错误**。ASME 页面与 Crossref：**Hongyan Bu**, Zhendong Guo, Liming Song, Jun Li；页面脚注 "1 Joint first author"（Bu 与 Guo 并列一作，四人均标通讯）。郭老师当时单位为 Nanyang Technological University。2026-09-06 已全仓修正 |
+| P14 第一作者 | 旧版 "Zhendong Guo et al." | Crossref：Cunxi Li, Liming Song, Zhendong Guo, Zhao Yang, Jun Li, Zhenping Feng（郭老师列第三） |
+| P13 作者序 | — | Crossref：Qineng Wang, Liming Song, Zhendong Guo, Jun Li, Zhenping Feng（与事实卡一致 ✅） |
 | DA-EGO 年份 | 白皮书第 04 讲标 `(*Eng Opt 2025*)`，README 表标 2024 | 以 Taylor & Francis 页面为准：2024 年在线发表 |
 
 ## 四、复现方法

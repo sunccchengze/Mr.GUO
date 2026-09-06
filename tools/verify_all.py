@@ -65,7 +65,12 @@ FORBIDDEN = [
     ("technique with high freedom and superior smoothness. Driven by a large-variable optimization algorithm",
      "论文 10 的改写版摘要（逐字版见事实卡 P10 §二）"),
     ("an efficient uncertainty quantification method evaluates the impacts of slot width",
-     "论文 04 的改写版摘要（逐字版见 corpus/web_evidence/P04.md）"),]
+     "论文 04 的改写版摘要（逐字版见 corpus/web_evidence/P04.md）"),
+    # 2026-09-06 第三轮复审新增（见 docs/重建计划.md §六；合并自独立复审分支）
+    ("GAN-Endwall", "论文 14 的方法是 VAE + NURBS 层（出版商摘要），旧代号 GAN-Endwall 属误称"),
+    ("SPIE-AI", "论文 20 的旧版臆造代号；现按摘要写作“物理增强子午面全景预测”"),
+    ("Official Abstract", "全集汇总 §三 的中文转述曾被标为 Official Abstract，应写“摘要转述”"),
+]
 
 # extract_corpus.py 允许的标准库（不要求在 requirements 中声明）
 _STDLIB_OK = {"__future__", "argparse", "hashlib", "html", "json", "os", "re", "sys", "unicodedata",
@@ -354,20 +359,21 @@ def verify_consistency() -> None:
           f"README 索引表检出 {len(ids)} 行 / {len(uniq)} 个唯一编号（目标 20/20）")
 
     # D2b：目标 D 要求“全仓库统一 01–20”，旧检查只看了 README 索引表。
-    # 本轮审计发现公开/付费/全集用自有序号且无规范编号对照——现已补“规范编号 **NN**”
-    # 标注，此处锁定：公开 ≥13 处、付费 5 处、全集 #### 标题 20 处。
+    # 2026-09-06 合并后编号体系升级为标题级【论文 XX】标签（原“规范编号 **NN**”后缀式已淘汰）：
+    # 公开 15 篇 + 付费 5 篇 = 20，全集 §三 20 张卡片标题全部带【论文 XX】。
     d2b_bad = []
-    open_txt = open(os.path.join(ROOT, "公开论文整理.md"), encoding="utf-8").read()
-    if open_txt.count("规范编号") < 13:
-        d2b_bad.append(f"公开论文整理规范编号标注仅 {open_txt.count('规范编号')} 处（目标 ≥13）")
-    pay_txt = open(os.path.join(ROOT, "付费论文五篇整理.md"), encoding="utf-8").read()
-    if pay_txt.count("规范编号") < 5:
-        d2b_bad.append(f"付费论文五篇整理规范编号标注仅 {pay_txt.count('规范编号')} 处（目标 5）")
+    tag_re2 = re.compile(r"【论文\s*(\d{2})】")
+    open_tags = set(tag_re2.findall(open(os.path.join(ROOT, "公开论文整理.md"), encoding="utf-8").read()))
+    if len(open_tags) != 15:
+        d2b_bad.append(f"公开论文整理【论文 XX】标签 {len(open_tags)} 个（目标 15）")
+    pay_tags = set(tag_re2.findall(open(os.path.join(ROOT, "付费论文五篇整理.md"), encoding="utf-8").read()))
+    if len(pay_tags) != 5:
+        d2b_bad.append(f"付费论文五篇整理【论文 XX】标签 {len(pay_tags)} 个（目标 5）")
     quan_txt = open(os.path.join(ROOT, "郭老师论文全集综合整理汇总.md"), encoding="utf-8").read()
-    n_head = len(re.findall(r"^#### \d+\..*规范编号", quan_txt, re.M))
+    n_head = len(re.findall(r"^#### \d+\.\s*【论文 \d{2}】", quan_txt, re.M))
     if n_head != 20:
-        d2b_bad.append(f"全集 #### 标题规范编号标注 {n_head}/20")
-    check("D2b-编号落地", not d2b_bad, "；".join(d2b_bad) if d2b_bad else "公开/付费/全集规范编号标注齐全")
+        d2b_bad.append(f"全集 #### 标题带【论文 XX】{n_head}/20")
+    check("D2b-编号落地", not d2b_bad, "；".join(d2b_bad) if d2b_bad else "公开15+付费5=全集20，标题级【论文 XX】齐全")
 
     wp = open(WHITEPAPER, encoding="utf-8").read()
     check("D3-口径统一", ("15+5" not in wp),
@@ -378,11 +384,23 @@ def verify_consistency() -> None:
     #   (b) 已被裁定为硬伤的字符串不得在任何文档中复现（回归守卫）。
     link_doc = os.path.join(ROOT, "论文链接整理.md")
     link_txt = open(link_doc, encoding="utf-8").read() if os.path.exists(link_doc) else ""
-    missing_doi = [f"P{p['id']}:{p['doi']}" for p in papers
-                   if p.get("doi") and p["doi"] not in link_txt]
+    # 旧判定只查“从 PDF 抽到的 DOI”，5 篇无本地原文的论文（04/05/13/14/20）因此**从未被检查**——
+    # 论文 14/20 长期“无 DOI”正是这样漏网的。现改为：20 篇的 DOI（抽取值优先，否则取
+    # extract_corpus.PAPER_MAP 的声明值）都必须落到《论文链接整理.md》（DOI 比对不区分大小写）。
+    summary_doc = os.path.join(ROOT, "郭老师论文全集综合整理汇总.md")
+    summary_txt = (open(summary_doc, encoding="utf-8").read().lower()
+                   if os.path.exists(summary_doc) else "")
+    missing_doi = []
+    for p in papers:
+        doi = p.get("doi") or p.get("declared_doi")
+        if not doi:
+            missing_doi.append(f"P{p['id']}:无DOI")
+            continue
+        if doi.lower() not in link_txt.lower() or doi.lower() not in summary_txt:
+            missing_doi.append(f"P{p['id']}:{doi}")
     check("D4a-DOI落地", not missing_doi,
-          "《论文链接整理.md》缺少已确证的 DOI：" + "、".join(missing_doi[:6])
-          if missing_doi else "20 篇已确证 DOI 全部落到索引文档")
+          "索引文档（链接整理/全集汇总）缺少 DOI：" + "、".join(missing_doi[:6])
+          if missing_doi else "20/20 篇 DOI（含 5 篇无本地原文者）均落到链接整理与全集汇总")
 
     # 允许"辟谣式引用"：错误串若出现在 更正/旧版/错误/无此说法/虚构/应为 等语境中，
     # 说明是在记录"这里曾经错、现在改了"，属正当用途；否则即为残留。
@@ -430,6 +448,33 @@ def verify_consistency() -> None:
     check("D5-工况限定", not d5_bad,
           "14.0% 脱离 MA=0.8 限定（过度泛化）：" + "、".join(d5_bad) if d5_bad
           else "全部 14.0% 均带 MA=0.8 工况限定")
+
+    # D6：规范编号必须贯穿全部索引文档（目标 D「统一 01–20 编号」）。
+    #   （合并说明：该检查在独立复审分支上原名 D5-规范编号贯穿；与本仓 D5-工况限定 撞号，
+    #    合并后统一改为 D6，selftest_verifier 的对应用例同步改名。）
+    #   旧状态：全集 §三 卡片、公开/付费/链接整理只有“文内顺序号”，读者无法把
+    #   “公开论文整理的第 9 篇”对应到“白皮书第 11 讲 / 论文 12”。
+    #   现判定：① 全集汇总 §三 与《论文链接整理》各自含全部 20 个 ［论文 XX］ 标签；
+    #           ② 《公开论文整理》∪《付费论文五篇整理》恰好覆盖 20 个编号且两者不重叠。
+    tag_re = re.compile(r"【论文\s*(\d{2})】")
+    all20 = {f"{i:02d}" for i in range(1, 21)}
+
+    def tags(path: str) -> set[str]:
+        return set(tag_re.findall(open(path, encoding="utf-8").read())) if os.path.exists(path) else set()
+
+    pub = tags(os.path.join(ROOT, "公开论文整理.md"))
+    paid = tags(os.path.join(ROOT, "付费论文五篇整理.md"))
+    problems = []
+    for name, got in (("全集汇总", tags(summary_doc)), ("链接整理", tags(link_doc))):
+        if got != all20:
+            problems.append(f"{name}缺 {sorted(all20 - got)}")
+    if pub | paid != all20:
+        problems.append(f"公开∪付费缺 {sorted(all20 - (pub | paid))}")
+    if pub & paid:
+        problems.append(f"公开∩付费重叠 {sorted(pub & paid)}")
+    check("D6-规范编号贯穿", not problems,
+          "；".join(problems) if problems
+          else f"四份索引文档均按【论文 XX】贯穿 20 篇（公开 {len(pub)} + 付费 {len(paid)}）")
 
 
 # --------------------------------------------------------------------------- E
