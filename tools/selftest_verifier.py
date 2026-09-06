@@ -29,6 +29,8 @@ SKILL_README = os.path.join(ROOT, "skills", "omni_scholar", "README.md")
 LECT07 = os.path.join(ROOT, "docs", "lectures", "07.md")
 PART6 = os.path.join(ROOT, "docs", "part6.md")
 FACT01 = os.path.join(ROOT, "corpus", "facts", "P01.md")
+LECT03 = os.path.join(ROOT, "docs", "lectures", "03.md")
+LECT10 = os.path.join(ROOT, "docs", "lectures", "10.md")
 SAMPLING = os.path.join(ROOT, "code", "sampling.py")
 QUANJI = os.path.join(ROOT, "郭老师论文全集综合整理汇总.md")
 LINKS = os.path.join(ROOT, "论文链接整理.md")
@@ -70,6 +72,13 @@ MUTATIONS = [
     # C4 只按“篇”统计抓不到这种回退，必须由 C5 按讲捕获。
     # 第五轮新增：规范 §三.3 禁止的"无量化套话"回流，必须被 A7 抓到
     # （旧验收器只查"数字有没有标签"，对"显著/大幅"这类无出处形容词完全无感）
+    # 第六轮新增：讲次↔论文并列标注错位（历史上"白皮书第10讲=全集16号"式混乱），必须被 D7 抓到
+    ("D7 讲次论文标注错位", LECT10, "（**论文 16**）", "（**论文 12**）", "D7"),
+    # 第六轮新增：自陈算式被改坏（改数字忘同步推导值），必须被 A8 抓到
+    # A5 只看有没有来源标签，对"标签在、算术错"完全无感
+    ("A8 自陈算式算错", LECT03, "1500/20000 = 7.5%", "1500/20000 = 15.0%", "A8"),
+    # 第六轮新增：LaTeX 结构损坏（公式渲染成乱码），必须被 A9 抓到
+    ("A9 公式花括号损坏", LECT03, "$$", "$$\\frac{a}{b$$\n\n$$", "A9"),
     ("A7 无源套话回流", WP, "\n## 6.5 全书收口",
      "\n本方法把端壁二次流损失显著降低。\n\n## 6.5 全书收口", "A7"),
     # 第五轮新增：自称"逐字/verbatim"的英文摘要被改写或截断，必须被 F5 抓到

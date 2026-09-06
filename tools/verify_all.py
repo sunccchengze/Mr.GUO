@@ -688,6 +688,111 @@ ADJ_WHITELIST = ("显著性", "显著变量", "最显著", "显著水平",
                  "优化到完美", "图纸上完美", "几何做得完美")
 
 
+def verify_rigor() -> None:
+    """A8/A9/D7：本轮新增的三类\"内容自洽性\"检查。
+
+    前几轮的裁判只会问\"有没有标签\"，从不问\"标签指对了没有、算式算对了没有\"。
+    这三项都是**不依赖人工阅读**就能判定真伪的硬检查。
+    """
+    lect_dir = os.path.join(ROOT, "docs", "lectures")
+    lect_files = sorted(glob.glob(os.path.join(lect_dir, "*.md")))
+    prose = lect_files + [os.path.join(ROOT, "docs", f) for f in ("part6.md", "chapter0.md", "front_matter.md")]
+    prose = [f for f in prose if os.path.exists(f)]
+
+    def strip_code(t: str) -> str:
+        return re.sub(r"```.*?```", "", t, flags=re.S)
+
+    # ---- D7：\"第 N 讲（论文 XX）\"的并列标注必须与该讲元数据块的规范编号一致
+    # 规范 §三.4 要求编号唯一且并列标注；但\"并列得对不对\"从来没被检查过——
+    # 历史上正是\"白皮书第10讲=全集16号\"这类错位造成了口径混乱。
+    # 基准不能只取自讲义自述的一处，否则\"标注与基准一起被改\"就测不出错位
+    # （反身测试正是这样抓到 D7 初版盲区的）。这里交叉校验三个独立来源：
+    #   ① 标题里的「（**论文 XX**）」 ② 元数据块的「规范编号」 ③ 元数据块 DOI ↔ index.json
+    lec2paper: dict[str, str | None] = {}
+    self_conflict = []
+    doi2paper = {}
+    idx_path = os.path.join(CORPUS, "index.json")
+    if os.path.exists(idx_path):
+        for rec in json.load(open(idx_path, encoding="utf-8")).get("papers", []):
+            d = (rec.get("doi") or "").strip().lower()
+            if d:
+                doi2paper[d] = str(rec.get("id") or rec.get("no") or "").zfill(2)
+    for f in lect_files:
+        n = os.path.basename(f)[:2]
+        body = open(f, encoding="utf-8").read()
+        m_meta = re.search(r"\|\s*规范编号\s*\|\s*\*\*(\d\d)\*\*", body)
+        m_title = re.search(r"^###\s*【第\d\d讲】.*?（\*\*论文\s*(\d{1,2})\*\*）", body, re.M)
+        meta = m_meta.group(1) if m_meta else None
+        title = m_title.group(1).zfill(2) if m_title else None
+        if meta and title and meta != title:
+            self_conflict.append(f"第{n}讲标题写论文{title}、元数据写{meta}")
+        m_doi = re.search(r"\|\s*DOI\s*\|\s*`([^`]+)`", body)
+        if m_doi and meta:
+            d = m_doi.group(1).strip().lower()
+            if d in doi2paper and doi2paper[d] != meta:
+                self_conflict.append(f"第{n}讲 DOI 属论文{doi2paper[d]}、却标规范编号{meta}")
+        lec2paper[n] = meta
+    missing_meta = [k for k, v in lec2paper.items() if v is None]
+    missing_meta += [f"第{os.path.basename(f)[:2]}讲缺标题编号"
+                     for f in lect_files
+                     if not re.search(r"^###\s*【第\d\d讲】.*?（\*\*论文\s*\d{1,2}\*\*）",
+                                      open(f, encoding="utf-8").read(), re.M)]
+    missing_meta += self_conflict
+    pair_re = re.compile(r"第\s*(\d{1,2})\s*讲\s*[（(·]\s*论文\s*\*{0,2}(\d{1,2})")
+    mism, pairs = [], 0
+    for f in prose + [README, os.path.join(ROOT, "郭老师论文全集综合整理汇总.md")]:
+        if not os.path.exists(f):
+            continue
+        for m in pair_re.finditer(strip_code(open(f, encoding="utf-8").read())):
+            lec, pap = m.group(1).zfill(2), m.group(2).zfill(2)
+            pairs += 1
+            if lec2paper.get(lec) != pap:
+                mism.append(f"{os.path.basename(f)}「{m.group(0)}」应为论文{lec2paper.get(lec)}")
+    ok_d7 = not mism and not missing_meta
+    check("D7-讲次论文映射", ok_d7,
+          ("讲义自述冲突/缺失：" + "、".join(missing_meta[:4]) if missing_meta
+           else "并列标注错位：" + "；".join(mism[:4])) if not ok_d7
+          else f"20 讲标题/元数据/DOI 三处编号自洽，{pairs} 处并列标注一致")
+
+    # ---- A8：凡文中自行给出的算式（a/b≈c、(a−b)/b=c%），必须真的算得出来
+    # 这类\"推导值\"最容易在改数字时忘了同步，而 A5 只看它有没有标签。
+    div_re = re.compile(r"(\d[\d,]*\.?\d*)\s*[/／]\s*(\d[\d,]*\.?\d*)\s*[≈=]\s*\*{0,2}(\d[\d,]*\.?\d*)\s*\*{0,2}\s*(%|％)?")
+    wrong, n_expr = [], 0
+    for f in prose + sorted(glob.glob(os.path.join(CORPUS, "facts", "*.md"))):
+        s_ = strip_code(open(f, encoding="utf-8").read())
+        for m in div_re.finditer(s_):
+            try:
+                a, b, c = (float(x.replace(",", "")) for x in m.groups()[:3])
+            except ValueError:
+                continue
+            if b == 0:
+                continue
+            n_expr += 1
+            real = a / b * (100 if m.group(4) else 1)
+            if abs(real - c) / max(abs(c), 1e-9) > 0.03:
+                wrong.append(f"{os.path.basename(f)}「{m.group(0).strip()}」实为{real:.4g}")
+    check("A8-算式自洽", not wrong,
+          f"{len(wrong)} 处自陈算式算错：" + "；".join(wrong[:4])
+          if wrong else f"{n_expr} 条自陈算式全部复算通过（容差 3%）")
+
+    # ---- A9：LaTeX 结构完整（$$ 成对、行内 $ 成对、公式内花括号平衡）
+    # 公式崩了不影响任何既有检查，却会让读者看到一片乱码——属于\"交付质量\"硬伤。
+    broken = []
+    for f in prose:
+        body = strip_code(open(f, encoding="utf-8").read())
+        if body.count("$$") % 2:
+            broken.append(f"{os.path.basename(f)}: $$ 块数为奇数")
+        inline = len(re.findall(r"(?<!\\)\$", re.sub(r"\$\$.*?\$\$", "", body, flags=re.S)))
+        if inline % 2:
+            broken.append(f"{os.path.basename(f)}: 行内 $ 数为奇数")
+        for m in re.finditer(r"\$\$(.*?)\$\$", body, re.S):
+            if m.group(1).count("{") != m.group(1).count("}"):
+                broken.append(f"{os.path.basename(f)}: 花括号不平衡「{m.group(1).strip()[:40]}」")
+    check("A9-公式结构", not broken,
+          f"{len(broken)} 处 LaTeX 结构损坏：" + "；".join(broken[:4])
+          if broken else "全部讲义 $$/$ 成对、公式花括号平衡")
+
+
 def verify_prose() -> None:
     """A7/F5：验收器长期只查\"数字有没有标签\"，从不查\"形容词有没有出处\"与\"逐字是不是真逐字\"。"""
     # ---- A7：无量化形容词必须带来源标注（规范 §三.3）
@@ -766,6 +871,7 @@ def main() -> int:
     verify_skills()
     verify_hygiene()
     verify_prose()
+    verify_rigor()
 
     if "--json" in sys.argv:
         print(json.dumps([{"item": c, "pass": ok, "detail": d} for c, ok, d in results],
