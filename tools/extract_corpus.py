@@ -122,6 +122,10 @@ def normalize(text: str) -> str:
     """统一全角/半角与空白，便于后续正则检索。"""
     text = unicodedata.normalize("NFKC", text)
     text = text.replace("\u00ad", "")           # 软连字符
+    # pypdf 对部分符号字形（上标、k-ω 的 ω、负号、≤ 等）会吐成 NUL（\x00），
+    # 语料里就成了 "10\x006"（10⁻⁶）、"k\x00w"（k-ω）、"[\x00 30°]"（[−30°]）：
+    # ① grep/逐字比对被拆断；② 人工检索这些量会假性落空。与 /uXXXX 属同类缺陷。
+    text = text.replace("\x00", "")
     # pypdf 对字体内未映射的字形会吐出 "/u1D70E" 这类转义（多见于数学斜体希腊字母 σ/ξ/x）。
     # 若不还原，语料里就成了 "…uncertainty /u1D70E(/u1D431)…"，导致
     # ① 逐字摘要无法与语料比对；② 全文检索按 σ 检索必然落空。

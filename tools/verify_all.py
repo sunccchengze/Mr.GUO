@@ -155,12 +155,13 @@ def verify_whitepaper() -> None:
           "缺节：" + "、".join(missing_sec) if missing_sec else "20 讲均含规定小节")
 
     # 数字可溯：按"块"（段落 / 表格 / 列表项，以空行分隔）判定。
-    # 一个块内只要出现了百分比/倍数断言，就必须在同一块内带有可回溯的引用标注。
+    # 一个块内只要出现了百分比/倍数/次数断言，就必须在同一块内带有可回溯的引用标注。
     # 严格之处：① 不接受"块里有 ［"这种形式合规；② 不允许任何配额（旧版容忍 5 处）；
     #          ③ 标题/引注/短句不豁免（旧版 len(blk)<120 直接跳过，是后门）；
-    #          ④ 规范原文是“百分比/倍数/CFD次数”，旧检查只查了百分比，本轮补上倍数。
+    #          ④ 规范原文是"百分比/倍数/CFD次数"，次轮补了倍数，第十三轮补次数。
     blocks = re.split(r"\n\s*\n", text)
     bare: list[str] = []
+    flagged: set[int] = set()
     in_fence = False
     for i, blk in enumerate(blocks):
         # 跳过代码块（代码是执行物，不是文字断言）
@@ -180,10 +181,34 @@ def verify_whitepaper() -> None:
             next_blk = blocks[i + 1] if i + 1 < len(blocks) else ""
             if CITED_RE.search(prev_blk) or CITED_RE.search(next_blk):
                 continue
+        flagged.add(i)
+        bare.append(re.sub(r"\s+", " ", blk.strip())[:70])
+    # 次数断言（规范 §三.1 的"CFD 次数"）：第十三轮补上。旧版 A5 的注释引用了该规范，
+    # 但正则只写了 %|倍——"1500 次 CFD"这类断言可以裸奔。辟谣/史实块（6.4 式"旧版数字公示"）
+    # 与百分比项的 D4b 豁免同理：块内明说"无出处/删除/旧版"者不重复报。
+    COUNT_RE = re.compile(r"\d[\d,]*\s*次\s*(?:CFD|N-S|RANS|数值模拟|数值仿真|仿真|评估|求解|模拟|计算)")
+    DEBUNK = ("旧版", "无出处", "删除", "🗑️", "辟谣", "已更正")
+    in_fence = False
+    for i, blk in enumerate(blocks):
+        if blk.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or i in flagged:
+            continue
+        if not COUNT_RE.search(blk):
+            continue
+        if CITED_RE.search(blk) or any(k in blk for k in DEBUNK):
+            continue
+        is_table = sum(1 for ln in blk.splitlines() if ln.strip().startswith("|")) >= 2
+        if is_table:
+            prev_blk = blocks[i - 1] if i > 0 else ""
+            next_blk = blocks[i + 1] if i + 1 < len(blocks) else ""
+            if CITED_RE.search(prev_blk) or CITED_RE.search(next_blk):
+                continue
         bare.append(re.sub(r"\s+", " ", blk.strip())[:70])
     check("A5-数字可溯", not bare,
-          (f"{len(bare)} 个段落含百分比断言但无可回溯的来源标注，例：{' / '.join(bare[:3])}"
-           if bare else "含百分比断言的段落全部带来源标注"))
+          (f"{len(bare)} 个段落含百分比/倍数/次数断言但无可回溯的来源标注，例：{' / '.join(bare[:3])}"
+           if bare else "含百分比/倍数/次数断言的段落全部带来源标注"))
 
     # A6：篇级完整性——第六篇（对比、批判与前瞻）不得为空壳。
     m6 = re.search(r"^# 第六篇.*$", text, re.M)

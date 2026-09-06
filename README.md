@@ -80,6 +80,8 @@ Mr.GUO/
 ├── 付费论文五篇整理.md                             # ASME/SPIE 专题文档
 ├── 论文链接整理.md                                 # 核心文献链接与检索入口
 ├── docs/                                           # 白皮书源文件（白皮书由此装配，勿直接改产物）
+│   ├── front_matter.md                             # 著者前言与自学导读（含统一口径说明）
+│   ├── chapter0.md                                 # 第零章：初高中物理/数学前置铺垫
 │   ├── lectures/01–20.md                           # 20 讲讲稿（每讲固定 6 节）
 │   ├── part6.md                                    # 第六篇：全景对比矩阵 / 横向批判 / 前瞻选题
 │   └── 重建计划.md                                 # 验收标准、进度与成绩单（本仓库的"宪法"）
@@ -92,11 +94,11 @@ Mr.GUO/
 ├── tools/                                          # 装配、抽取与自动验收脚本
 │   ├── extract_corpus.py                           # PDF/HTML → 可检索语料（需 pypdf）
 │   ├── build_whitepaper.py                         # docs/lectures + code/ → 白皮书
-│   ├── verify_all.py                               # 一键验收：目标 A–F 共 29 项
+│   ├── verify_all.py                               # 一键验收：目标 A–F 共 42 项
 │   ├── verify_whitepaper.py                        # 白皮书逐讲明细（定位哪一讲不达标）
 │   └── selftest_verifier.py                        # 反身测试：证明验收器对缺陷真的敏感
 ├── skills/omni_scholar/                            # 文献核验技能包（可运行，非占位）
-├── images/                                         # 37 张配图：既有 12 张中英成对 + 新增（前 5 讲成对、后 9 讲仅中文版）；20/20 讲均配图
+├── images/                                         # 73 个图文件：31 张主题图（6 主题中英成对旧图 + 5 对新成对 + 9 张仅中文版）+ 42 张手绘讲稿图（第 01/04 讲各 3 张、其余每讲 §2/§3 各 1 张）；白皮书/讲义共 77 处引用，零死链零孤儿，20/20 讲均配图
 ├── Makefile                                        # venv / corpus / whitepaper / checks / verify / selftest
 └── README.md                                       # 仓库导航与全景索引
 ```
