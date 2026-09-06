@@ -185,6 +185,33 @@ def build_code_section() -> list[str]:
     return out
 
 
+def source_stamp() -> str:
+    """源内容戳：docs/ 与 code/ 下所有源文件内容的 SHA-256（前 12 位）。
+
+    白皮书此前用“此刻”做时间戳，导致源不变、重跑也 dirty。曾改用源 mtime，
+    但 mtime 经不起 touch/restore（selftest 恢复文件即刷新 mtime，导致 F4 误报）。
+    内容哈希则只与内容有关：源不变 → 戳不变 → 装配结果逐字节相同。
+    """
+    import hashlib
+    h = hashlib.sha256()
+    paths = []
+    for base in (os.path.join(ROOT, "docs"), CODE_DIR):
+        for dirpath, dirnames, files in os.walk(base):
+            # 派生目录不计入：__pycache__ 随每次运行重写，计入会导致戳漂移（F4 误报）。
+            dirnames[:] = [d for d in dirnames if d != "__pycache__"]
+            for f in sorted(files):
+                if f.startswith(".") or f.endswith((".pyc", ".pyo")):
+                    continue
+                paths.append(os.path.join(dirpath, f))
+    for p in sorted(paths):
+        try:
+            with open(p, "rb") as fh:
+                h.update(fh.read())
+        except OSError:
+            pass
+    return "src-" + h.hexdigest()[:12]
+
+
 def main() -> None:
     lectures: dict[str, str] = {}
     missing: list[str] = []
@@ -202,7 +229,7 @@ def main() -> None:
     doc.append("")
     doc.append(f"> 📌 **本文件由 `tools/build_whitepaper.py` 自动装配生成，请勿直接编辑。**")
     doc.append(f"> 修改内容请改 `docs/lectures/` 下的讲稿源文件后重新运行装配脚本。")
-    doc.append(f"> 最近生成：{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+    doc.append(f"> 内容版本：{source_stamp()}（= 讲稿/代码源文件的内容哈希；源不变则装配结果逐字节不变）")
     doc.append("")
     doc.append("---")
     doc.append("")

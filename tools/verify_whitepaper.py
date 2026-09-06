@@ -50,7 +50,7 @@ def percent_blocks_unsourced(block: str):
         if blk.lstrip().startswith("```"):
             in_fence = not in_fence
             continue
-        if in_fence or not re.search(r"\d+(?:\.\d+)?\s?%", blk):
+        if in_fence or not re.search(r"\d+(?:\.\d+)?\s?(?:%|倍)", blk):
             continue
         if V.CITED_RE.search(blk):
             continue
@@ -80,8 +80,10 @@ def main() -> int:
     bad = 0
     for lid, blk in blocks:
         n = len(re.sub(r"\s", "", blk))
-        hits = [s for s in V.REQUIRED_SECTIONS if s in blk]
-        miss = "、".join(s for s in V.REQUIRED_SECTIONS if s not in blk) or "—"
+        heads_in = re.findall(r"^#{3,4}\s+(.*)$", blk, re.M)
+        hits = [s for s in V.REQUIRED_SECTIONS if any(s in h for h in heads_in)]
+        miss = "、".join(s for s in V.REQUIRED_SECTIONS
+                         if not any(s in h for h in heads_in)) or "—"
         unsourced = percent_blocks_unsourced(blk)
         ok = n >= MIN_CHARS and len(hits) == N_REQUIRED and not unsourced
         bad += 0 if ok else 1

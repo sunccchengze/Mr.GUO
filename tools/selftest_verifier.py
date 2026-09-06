@@ -26,6 +26,11 @@ WP = os.path.join(ROOT, "燃气轮机智能设计与前沿算法自学白皮书.
 FACTS = os.path.join(ROOT, "corpus", "facts", "P09.md")
 README = os.path.join(ROOT, "README.md")
 SKILL_README = os.path.join(ROOT, "skills", "omni_scholar", "README.md")
+LECT07 = os.path.join(ROOT, "docs", "lectures", "07.md")
+PART6 = os.path.join(ROOT, "docs", "part6.md")
+FACT01 = os.path.join(ROOT, "corpus", "facts", "P01.md")
+SAMPLING = os.path.join(ROOT, "code", "sampling.py")
+QUANJI = os.path.join(ROOT, "郭老师论文全集综合整理汇总.md")
 
 # (用例名, 被改文件, 搜索串, 替换串, 期望变红的检查项)
 MUTATIONS = [
@@ -38,12 +43,32 @@ MUTATIONS = [
     ("D4b 错误年份回流", README, "| **15** | 2025 |",
      "| **15** | 2024 | *IEEE Conference 2024* |"),
     ("E3 端到端命令缺失", SKILL_README, "core.py --demo", "core.py --无此命令"),
+    # --- 本轮收紧项的反身用例（2026-09-06） ---
+    ("A4 标题降级为正文", WP, "#### 2. 叶轮机械中的真实工程死穴",
+     "2. 叶轮机械中的真实工程死穴", "A4"),
+    ("A5 无源倍数", WP, "\n## 6.5 全书收口",
+     "\n本方法把效率提升了 3 倍。\n\n## 6.5 全书收口", "A5"),
+    ("A6 缺6.3小节", WP, "## 6.3 前瞻选题", "## 6.3 待补", "A6"),
+    ("D4b 单年份旧口径回流", README, "| **11** | 2024 |",
+     "| **11** | 2024 | Eng Opt (2025) 旧口径 |", "D4b"),
+    ("D5 无MA限定的14.0%", README, "损失实测降低 14.0%(MA=0.8)",
+     "损失实测降低 14.0%", "D5"),
+    ("F1b 事实卡栏目改名", FACT01, "## 六、局限与可攻击点", "## 六、其他事项", "F1b"),
+    ("F4 白皮书与源脱节", LECT07, "6 倍维度；10 次独立运行［原文 P08",
+     "6 倍维度；10 次独立运行［正文 P08", "F4"),
+    ("B 代码注入运行时错误", SAMPLING, 'if __name__ == "__main__":',
+     'raise RuntimeError("selftest注入")\nif __name__ == "__main__":', "B"),
 ]
 
 
-def run_verify() -> str:
+def run_verify(fast: bool = False) -> str:
+    env = dict(os.environ)
+    if fast:
+        # 非B用例不需要真跑pytest（~70s/轮）：verify_all 见此标记即把 B4b/B5b 记为 SKIP。
+        # 这只是反身测试的加速机制——默认的 `make verify` 仍是全量真跑。
+        env["MRGUO_SKIP_SLOW"] = "1"
     p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "verify_all.py")],
-                       cwd=ROOT, capture_output=True, text=True)
+                       cwd=ROOT, capture_output=True, text=True, env=env)
     return p.stdout
 
 
@@ -70,7 +95,7 @@ def main() -> int:
     print("=" * 78)
     print("验收器反身测试：故意注入缺陷，断言 verify_all.py 必须报 FAIL")
     print("=" * 78)
-    base = items(run_verify())
+    base = items(run_verify(fast=True))
     bad0 = [k for k, v in base.items() if v != "PASS"]
     if bad0:
         print(f"⚠ 基线不干净，先修好这些再自测：{bad0}")
@@ -88,7 +113,8 @@ def main() -> int:
                 continue
             t = open(path, encoding="utf-8").read()
             open(path, "w", encoding="utf-8").write(t.replace(needle, repl, 1))
-            after = items(run_verify())
+            # B 用例必须全量真跑才能捕获；其余用例用加速模式。
+            after = items(run_verify(fast=not (want or "").startswith("B")))
             caught = [k for k, v in after.items() if v == "FAIL"]
             if want:
                 hit = [k for k in caught if k.startswith(want)]
@@ -109,7 +135,7 @@ def main() -> int:
         print("   → 说明裁判仍然太宽松，请收紧 verify_all.py 而不是放松标准。")
         return 1
     print(f"✅ 全部 {len(MUTATIONS)} 类缺陷均被捕获；仓库已还原。")
-    final = items(run_verify())
+    final = items(run_verify(fast=True))
     unclean = [k for k, v in final.items() if v != "PASS"]
     print(f"   还原后复跑：{len(final) - len(unclean)}/{len(final)} PASS"
           + (f"（残留 {unclean}）" if unclean else ""))

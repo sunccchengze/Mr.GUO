@@ -382,7 +382,13 @@ class OmniScholarEngine:
 
     # ---------------------------------------------------------------- 3) 演进拓扑
     def build_evolution_topology(self) -> Dict[str, Any]:
-        """按**真实年份**排代 + 方法关键词共现 + 共同作者，构建跨文献拓扑。"""
+        """按**裁定年份**排代 + 方法关键词共现 + 共同作者，构建跨文献拓扑。
+
+        年份/载体取 index.json 的 curated_year/curated_venue（人工按出版商页面裁定，
+        20 篇全覆盖），而不取 year_hint/journal_hint——后者是启发式嗅探，曾把 P02
+        误标为 2016、把 P15 的载体误标为 Engineering Optimization，且无原文的
+        5 篇嗅探不到会被静默丢弃。
+        """
         rows = []
         for pid in self.paper_ids():
             body = self.text(pid)
@@ -391,8 +397,8 @@ class OmniScholarEngine:
             p = self.papers[pid]
             rows.append({
                 "id": pid,
-                "year": p.get("year_hint"),
-                "venue": p.get("journal_hint"),
+                "year": p.get("curated_year") or p.get("year_hint"),
+                "venue": p.get("curated_venue") or p.get("journal_hint"),
                 "has_fulltext": bool(p.get("has_fulltext")),
                 "methods": methods,
             })
@@ -421,8 +427,8 @@ class OmniScholarEngine:
             "timeline_by_year": timeline,
             "methods_per_paper": {f"P{r['id']}": r["methods"] for r in rows},
             "method_cooccurrence_top": cooccurrence[:15],
-            "note": ("拓扑完全由 corpus/ 中的真实文本统计得出：年份取 index.json 的 year_hint，"
-                     "方法命中取正文正则匹配。未做任何人工归类。"),
+            "note": ("年份/载体取 index.json 的 curated 字段（人工按出版商页面裁定，见 "
+                     "tools/extract_corpus.py 的 CURATED_META），方法命中取正文正则匹配。"),
         }
 
     # ---------------------------------------------------------------- 4) 跨文献互证

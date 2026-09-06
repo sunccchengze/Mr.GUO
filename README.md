@@ -11,7 +11,7 @@
 - 📄 **[公开论文整理.md](./公开论文整理.md)** —— 开源/公开出版物专题整理与摘要
 - 💎 **[付费论文五篇整理.md](./付费论文五篇整理.md)** —— ASME / SPIE 重点期刊与会议论文精细化专题整理
 - 🔗 **[论文链接整理.md](./论文链接整理.md)** —— 核心发表物 DOI 与出版商检索入口索引
-- 📁 **[郭老师论文/](./郭老师论文/)** —— 本地论文全文原件存储目录（包含 13 篇 PDF 与 2 篇 ScienceDirect HTML 原文）
+- 📁 **[郭老师论文/](./郭老师论文/)** —— 本地论文原件存储目录（13 篇 PDF 全文 + 2 篇 ScienceDirect HTML 摘要页，仅摘要与元数据）
 
 ---
 
@@ -27,13 +27,13 @@
 | **06** | 2023 | Generative Multiform Bayesian Optimization | *IEEE Trans. Cybernetics* | `Generative_Multiform_Bayesian_Optimization.pdf` | GMFoO 多隐空间多形式生成式优化 |
 | **07** | 2023 | An efficient surrogate-assisted differential evolution algorithm for turbomachinery cascades optimization with more than 100 variables | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963823005710-main.pdf` | GSDE 超百维代理差分算法 / 3.5级压气机优化 |
 | **08** | 2024 | Knowledge transfer accelerated turbine blade optimization via an sample-weighted variational autoencoder | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963824001317-main.pdf` | SW-VAE 样本加权自编码器 / 跨任务知识迁移 |
-| **09** | 2024 | Experimental investigation on the aerodynamic performance of a transonic turbine rotor with non-axisymmetric endwall | *Aerosp. Sci. Technol.* | `S1270963824001482.htm` | 跨声速环形叶栅风洞实验 / 损失实测降低 14.0% |
+| **09** | 2024 | Experimental investigation on the aerodynamic performance of a transonic turbine rotor with non-axisymmetric endwall | *Aerosp. Sci. Technol.* | `S1270963824001482.htm` | 跨声速环形叶栅风洞实验 / 损失实测降低 14.0%(MA=0.8) |
 | **10** | 2024 | Aerothermal optimization of a turbine rotor tip configuration based on free-form deformation approach | *Int. J. Heat Fluid Flow* | `S0142727X24003692.htm` | FFD 自由变形 / 涡轮转子叶尖凹槽气动热优化 |
-| **11** | 2024 | A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems | *Eng. Optimization* | `A dynamic aggregation strategy enhanced...pdf` | DA-EGO 动态子空间分解与聚合算法 |
+| **11** | 2024 | A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems | *Eng. Optimization* | `A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems.pdf` | DA-EGO 动态子空间分解与聚合算法 |
 | **12** | 2024 | Enhancing the Generalization Ability of Endwall Film Cooling Prediction by Incorporating Superposition Principle into Transformer-based Neural Operator | *SSRN / Elsevier* | `ssrn-4869789.pdf` | SDNO 叠加深层神经算子 / 气膜小样本大外推 |
 | **13** | 2024 | A Novel Multi-Fidelity Surrogate for Efficient Turbine Design Optimization | *J. Turbomach.* (ASME) | 在线收录 | DBSCAN 聚类侦测 / EMFS 局部高保真融合 |
 | **14** | 2024 | Generative Model Based Parameterization for More Efficient Aerodynamic Optimization of Non-Axisymmetric Endwall | *ASME Turbo Expo* | 会议收录 | 深度生成模型 / 非轴对称端壁紧凑参数化 |
-| **15** | 2025 | AI-Assisted Fluid-Structure Modeling and Optimization of Pump-Jet Propulsor | *IEEE Congr. Evol. Comput. (CEC)* | `AI-Assisted_Fluid-Structure_Modeling...pdf` | 泵喷推进器流固耦合 AI 辅助多目标优化 |
+| **15** | 2025 | AI-Assisted Fluid-Structure Modeling and Optimization of Pump-Jet Propulsor | *IEEE Congr. Evol. Comput. (CEC)* | `AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf` | 泵喷推进器流固耦合 AI 辅助多目标优化 |
 | **16** | 2025 | A panoramic aerodynamic performance prediction method for turbomachinery cascades using transformer-enhanced neural operator | *Chin. J. Aeronaut.* | `1-s2.0-S1000936125000792-main.pdf` | TNO Transformer 增强神经算子 / 全景 N-S 场预测 |
 | **17** | 2026 | Generative Transfer Optimization for More Efficient Turbine Blade Design | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963826007042-main.pdf` | GTO 生成对抗网络 (GAN) / 梯度重参数化迁移 |
 | **18** | 2026 | Physics-enhanced performance prediction and intelligent design for wide-operating-range turbine blades | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963826007315-main.pdf` | 流动相似原理 / ResUNet 宽工况智能设计 |
@@ -51,7 +51,7 @@
 3. **物理增强神经网络算子与智能全景预测（AI4Turbomachinery）**
    - 提出 TNO、SDNO 等前沿神经算子，融合 Navier-Stokes 守恒律与气膜叠加物理原理，实现秒级高保真流动性能全景预测。
 4. **叶轮机械复杂流动控制、气动热优化与跨声速风洞实验**
-   - 结合非轴对称端壁（NAE）、FFD 自由变形与跨声速环形叶栅风洞实测（实测降低总压损失 14.0%），提供系统级气动热流动控制方案。
+   - 结合非轴对称端壁（NAE）、FFD 自由变形与跨声速环形叶栅风洞实测（MA=0.8 时实测降低总压损失 14.0%，见事实卡 P09），提供系统级气动热流动控制方案。
 
 ---
 
@@ -59,7 +59,7 @@
 
 ```
 Mr.GUO/
-├── 郭老师论文/                                      # 本地论文全文原件（15篇）
+├── 郭老师论文/  # 本地论文原件 15 篇（13 PDF 全文 + 2 HTML 摘要页）
 │   ├── 1-s2.0-S0017931021007298-main.pdf           # IJHMT 2021 (非轴对称端壁)
 │   ├── 1-s2.0-S1000936125000792-main.pdf           # CJA 2025 (TNO 神经算子)
 │   ├── 1-s2.0-S1000936126003122-main.pdf           # CJA 2026 (SHAP 数据挖掘)
@@ -67,11 +67,11 @@ Mr.GUO/
 │   ├── 1-s2.0-S1270963824001317-main.pdf           # AST 2024 (SW-VAE 知识迁移)
 │   ├── 1-s2.0-S1270963826007042-main.pdf           # AST 2026 (GTO 生成式迁移)
 │   ├── 1-s2.0-S1270963826007315-main.pdf           # AST 2026 (相似原理宽工况)
-│   ├── A dynamic aggregation strategy enhanced...pdf # Eng Opt 2024 在线 / 2025 卷期 (DA-EGO)
-│   ├── AI-Assisted_Fluid-Structure_Modeling...pdf    # IEEE CEC 2025 (泵喷推进器)
+│   ├── A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems.pdf  # Eng Opt 2024-04-18 在线 / 2025,57(2) (DA-EGO)
+│   ├── AI-Assisted_Fluid-Structure_Modeling_and_Optimization_of_Pump-Jet_Propulsor.pdf  # IEEE CEC 2025 (泵喷推进器)
 │   ├── Generative_Multiform_Bayesian_Optimization.pdf # IEEE TCYB 2023 (GMFoO 优化)
-│   ├── S0142727X24003692.htm                       # IJHFF 2024 (FFD 叶顶气动热)
-│   ├── S1270963824001482.htm                       # AST 2024 (跨声速风洞实验)
+│   ├── S0142727X24003692.htm  # IJHFF 2024 (FFD 叶顶气动热；HTML 摘要页，全文未获取)
+│   ├── S1270963824001482.htm  # AST 2024 (跨声速风洞实验；HTML 摘要页，全文未获取)
 │   ├── s00158-021-02931-1.pdf                      # SMO 2021 (Filter-GEI 多保真)
 │   ├── s00158-021-03038-3.pdf                      # SMO 2021 (CR-EI 贝叶斯优化)
 │   └── ssrn-4869789.pdf                            # SSRN 2024 (SDNO 叠加神经算子)
@@ -109,8 +109,8 @@ Mr.GUO/
 
 ```bash
 make venv                    # 建虚拟环境并装 numpy + pypdf + pytest
-make corpus                  # 抽取 13 PDF + 2 HTML 正文到 corpus/txt/（派生物，不入库）
-make verify                  # 全仓验收（A 内容 / B 代码 / C 配图 / D 口径 / E 技能包 / F 交付物）
+make corpus                  # 抽取 13 PDF + 2 HTML 摘要页到 corpus/txt/（派生物，不入库）
+make verify                  # 全仓验收（A 内容 / B 代码 / C 配图 / D 口径 / E 技能包 / F 交付物），约 1~2 分钟（含 pytest 真跑）
 make selftest                # 反身测试：把已知缺陷注回仓库，断言验收器必须变红
 ```
 

@@ -3,7 +3,7 @@
 """
 extract_corpus.py —— Mr.GUO 本地文献语料抽取管线
 =============================================================================
-用途：把 `郭老师论文/` 下的 13 篇 PDF + 2 篇 ScienceDirect HTML 全文/元数据，
+用途：把 `郭老师论文/` 下的 13 篇 PDF 全文 + 2 篇 ScienceDirect HTML 摘要页（仅摘要与元数据），
       抽取为可检索的纯文本语料与结构化元数据，作为白皮书重建的唯一事实底座。
 
 设计原则（针对上一版"凭空编造数字"的问题）：
@@ -65,6 +65,35 @@ PAPER_MAP = [
     ("19", "1-s2.0-S1000936126003122-main.pdf",             "pdf",  "10.1016/j.cja.2026.104374"),
     ("20", None,                                            "none", None),
 ]
+
+# ---------------------------------------------------------------------------
+# 人工裁定（curated）的年份与发表载体：sniff_metadata() 的启发式嗅探会误抓
+# （如 P02 首页引用年份 2016、P15 参考文献中的期刊名），且无原文的 5 篇嗅探不到。
+# 下表依据 corpus/doi_verification.md 与事实卡著录人工裁定，是年份/载体的唯一口径：
+#   年份 = 首次正式发表年（在线优先）；P11 在线 2024，正式卷期 2025, 57(2)。
+# ---------------------------------------------------------------------------
+CURATED_META = {
+    "01": (2021, "Structural and Multidisciplinary Optimization"),
+    "02": (2021, "Structural and Multidisciplinary Optimization"),
+    "03": (2021, "International Journal of Heat and Mass Transfer"),
+    "04": (2021, "ASME Journal of Turbomachinery"),
+    "05": (2021, "ASME Journal of Turbomachinery"),
+    "06": (2023, "IEEE Transactions on Cybernetics"),
+    "07": (2023, "Aerospace Science and Technology"),
+    "08": (2024, "Aerospace Science and Technology"),
+    "09": (2024, "Aerospace Science and Technology"),
+    "10": (2024, "International Journal of Heat and Fluid Flow"),
+    "11": (2024, "Engineering Optimization"),
+    "12": (2024, "SSRN Preprint"),
+    "13": (2024, "ASME Journal of Turbomachinery"),
+    "14": (2024, "ASME Turbo Expo"),
+    "15": (2025, "IEEE Congress on Evolutionary Computation (CEC)"),
+    "16": (2025, "Chinese Journal of Aeronautics"),
+    "17": (2026, "Aerospace Science and Technology"),
+    "18": (2026, "Aerospace Science and Technology"),
+    "19": (2026, "Chinese Journal of Aeronautics"),
+    "20": (2026, "SPIE Conference"),
+}
 
 # 按文件名唯一化（防御性：同一文件被误配两次时只抽一次）
 _SEEN = set()
@@ -220,6 +249,7 @@ def main() -> int:
                 "id": pid, "file": None, "kind": "none", "pages": None,
                 "doi": None, "declared_doi": doi, "journal_hint": None,
                 "year_hint": None, "title_hint": None, "has_fulltext": False,
+                "curated_year": CURATED_META[pid][0], "curated_venue": CURATED_META[pid][1],
                 "chars": 0, "numeric_claims": [],
                 "note": "无本地原文，需网络检索补全（见 corpus/web_evidence/）",
             })
@@ -236,6 +266,7 @@ def main() -> int:
             record = {
                 "id": pid, "file": fname, "kind": "pdf", "pages": npages,
                 "doi": meta["doi"], "declared_doi": doi,
+                "curated_year": CURATED_META[pid][0], "curated_venue": CURATED_META[pid][1],
                 "journal_hint": meta["journal_hint"],
                 "year_hint": meta["year_hint"], "title_hint": meta["title_hint"],
                 "has_fulltext": len(text) > 20000,
@@ -245,6 +276,7 @@ def main() -> int:
             record = {
                 "id": pid, "file": fname, "kind": "html", "pages": None,
                 "doi": hmeta.get("citation_doi"), "declared_doi": doi,
+                "curated_year": CURATED_META[pid][0], "curated_venue": CURATED_META[pid][1],
                 "journal_hint": hmeta.get("citation_journal_title"),
                 "year_hint": (hmeta.get("citation_publication_date") or "")[:4] or None,
                 "title_hint": hmeta.get("citation_title"),
@@ -265,8 +297,28 @@ def main() -> int:
             f"fulltext={record['has_fulltext']}")
 
     index.sort(key=lambda r: r["id"])
+    # 确定性内容戳：原文目录的内容哈希，而非“此刻”（mtime 经不起 touch）。
+    # 否则每次重跑 index.json 都会变脏，破坏“可复现”承诺。
+    import hashlib
+    h = hashlib.sha256()
+    try:
+        names = sorted(os.listdir(PAPER_DIR))
+    except OSError:
+        names = []
+    for f in names:
+        if f.startswith("."):
+            continue
+        try:
+            with open(os.path.join(PAPER_DIR, f), "rb") as fh:
+                while True:
+                    blk = fh.read(1 << 20)
+                    if not blk:
+                        break
+                    h.update(blk)
+        except OSError:
+            pass
     out = {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": "src-" + h.hexdigest()[:12],
         "generator": "tools/extract_corpus.py",
         "papers": index,
     }
