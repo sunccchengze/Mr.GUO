@@ -7,7 +7,10 @@ build_whitepaper.py —— 由讲稿源文件装配白皮书
   1. 白皮书正文的每一讲都来自独立源文件 docs/lectures/NN.md，便于逐篇修订与评审；
   2. 目录、篇标题、讲次与论文编号的对应关系由本脚本统一生成，杜绝手抄导致的不一致；
   3. 第五篇代码篇由 code/ 目录下的**真实文件**自动嵌入，杜绝"文档里的代码跑不通"；
-  4. 缺失的讲次显式标记为"待重建"，而不是悄悄略写。
+  4. 缺失的讲次显式标记为"待重建"，而不是悄悄略写；
+  5. 目录跳转使用**显式稳定锚点**（`<a id="…">`），不再依赖各渲染器对中文
+     标题 slug 的各自实现——旧版 `anchor()` 与正文标题、与 GitHub GFM 三者
+     互不一致，导致目录几乎全坏。
 
 用法：
     python3 tools/build_whitepaper.py
@@ -17,7 +20,6 @@ from __future__ import annotations
 
 import os
 import re
-from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LECT_DIR = os.path.join(ROOT, "docs", "lectures")
@@ -71,13 +73,35 @@ CH0_PATH = os.path.join(ROOT, "docs", "chapter0.md")
 PART6_PATH = os.path.join(ROOT, "docs", "part6.md")
 APPENDIX_PATH = os.path.join(ROOT, "docs", "appendix.md")
 
+# ---------------------------------------------------------------------------
+# 稳定锚点：目录与正文共用同一套 ID，渲染器无关
+# ---------------------------------------------------------------------------
+# 约定（ASCII，短，稳定，永不随标题文案漂移）：
+#   ch0 / ch0-1 / ch0-2 / ch0-3          第零章及其小节
+#   part-1 … part-4 / part-5 / part-6    各篇
+#   lec-01 … lec-20                      二十讲
+#   code-<stem>                          第五篇代码文件（stem 把非 [A-Za-z0-9]
+#                                        换成 -，如 benchmarks.py → benchmarks-py）
+#   sec-6-1 … sec-6-5                    第六篇小节
+#   appendix                              附录（若有）
 
-def anchor(text: str) -> str:
-    """生成 GitHub 风格的目录锚点。"""
-    s = text.strip().lower()
-    s = re.sub(r"[`*（）()【】\[\]·—\-/:.,%×\s]+", "-", s)
-    s = re.sub(r"-+", "-", s).strip("-")
-    return s
+
+def aid_tag(aid: str) -> str:
+    """生成正文锚点标记。同时写 id 与 name，兼容旧渲染器。"""
+    # 单独成行放在标题正上方：不影响标题文本、不影响 LECTURE_RE 等验收正则。
+    return f'<a id="{aid}" name="{aid}"></a>'
+
+
+def toc_link(text: str, aid: str, indent: int = 0) -> str:
+    """目录条目：显示文案 → 稳定锚点。"""
+    pad = "  " * indent
+    return f"{pad}- [{text}](#{aid})"
+
+
+def code_aid(filename: str) -> str:
+    """`benchmarks.py` → `code-benchmarks-py`。"""
+    stem = re.sub(r"[^A-Za-z0-9]+", "-", filename).strip("-").lower()
+    return f"code-{stem}"
 
 
 def read(path: str) -> str:
@@ -122,49 +146,130 @@ def lecture_title(content: str, fallback: str) -> str:
     return fallback
 
 
+def inject_heading_anchor(text: str, pattern: str, aid_fn) -> str:
+    """在匹配到的标题行正上方插入锚点（若尚未插入）。
+
+    pattern: 匹配整行标题的正则（需带 ^...$ 与 re.M）
+    aid_fn:  callable(match) -> aid 字符串
+    """
+    def repl(m: re.Match) -> str:
+        aid = aid_fn(m)
+        line = m.group(0)
+        # 已经有锚点则不重复
+        return f"{aid_tag(aid)}\n{line}"
+
+    # 避免对已带锚点的标题二次插入：若上一行已是 <a id=...> 则跳过
+    lines = text.split("\n")
+    out: list[str] = []
+    rx = re.compile(pattern)
+    for i, ln in enumerate(lines):
+        m = rx.match(ln)
+        if m:
+            prev = out[-1] if out else ""
+            if not re.match(r'^<a\s+id="[^"]+"', prev):
+                out.append(aid_tag(aid_fn(m)))
+        out.append(ln)
+    return "\n".join(out)
+
+
+def decorate_chapter0(body: str) -> str:
+    """给第零章主标题与 0.x 小节挂稳定锚点。"""
+    if not body:
+        return body
+    body = inject_heading_anchor(
+        body,
+        r"^#\s+第零章\b.*$",
+        lambda _m: "ch0",
+    )
+    body = inject_heading_anchor(
+        body,
+        r"^###\s+(0\.(\d)\s+.*)$",
+        lambda m: f"ch0-{m.group(2)}",
+    )
+    return body
+
+
+def decorate_lecture(content: str, key: str) -> str:
+    """给单讲主标题挂 lec-NN 锚点。"""
+    if not content:
+        return content
+    return inject_heading_anchor(
+        content,
+        rf"^###\s+【第{key}讲】.*$",
+        lambda _m: f"lec-{key}",
+    )
+
+
+def decorate_part6(body: str) -> str:
+    """给第六篇主标题与 6.x 小节挂稳定锚点。"""
+    if not body:
+        return body
+    body = inject_heading_anchor(
+        body,
+        r"^#\s+第六篇\b.*$",
+        lambda _m: "part-6",
+    )
+    body = inject_heading_anchor(
+        body,
+        r"^##\s+6\.(\d)\b.*$",
+        lambda m: f"sec-6-{m.group(1)}",
+    )
+    return body
+
+
 def build_toc(lectures: dict[str, str]) -> list[str]:
-    lines = []
+    """目录：全部指向显式稳定锚点，与正文 aid_tag 一一对应。"""
+    lines: list[str] = []
     toc0 = read(CH0_PATH)
     if toc0:
-        lines.append("- [第零章 极简前置铺垫：初高中物理/数学如何托起航空燃气轮机？](#"
-                     "第零章-极简前置铺垫初高中物理数学如何托起航空燃气轮机)")
-        for h in re.findall(r"^###\s+(0\.\d\s+.*)$", toc0, re.M):
-            lines.append(f"  - [{h}](#{anchor(h)})")
-    for start, end, _, ptitle, _ in PARTS:
-        lines.append(f"- [{ptitle}](#{anchor(ptitle)})")
+        lines.append(toc_link(
+            "第零章 极简前置铺垫：初高中物理/数学如何托起航空燃气轮机？", "ch0"))
+        for h in re.findall(r"^###\s+(0\.(\d)\s+.*)$", toc0, re.M):
+            title, num = h[0], h[1]
+            lines.append(toc_link(title, f"ch0-{num}", indent=1))
+
+    # 篇序号：PARTS 顺序即 1..4
+    for part_idx, (start, end, _, ptitle, _) in enumerate(PARTS, start=1):
+        lines.append(toc_link(ptitle, f"part-{part_idx}"))
         for i in range(start, end + 1):
             key = f"{i:02d}"
             title = lecture_title(lectures[key], f"第{key}讲")
-            lines.append(f"  - [{title}](#{anchor(title)})")
+            lines.append(toc_link(title, f"lec-{key}", indent=1))
+
     if os.path.isdir(CODE_DIR) and [f for f in os.listdir(CODE_DIR) if f.endswith(".py")]:
-        lines.append("- [第五篇 【实践与代码篇】可运行算法原型库](#"
-                     "第五篇-实践与代码篇可运行算法原型库)")
+        lines.append(toc_link("第五篇 【实践与代码篇】可运行算法原型库", "part-5"))
         for f in sorted(os.listdir(CODE_DIR)):
             if f.endswith(".py") and not f.startswith("_"):
-                lines.append(f"  - [`{f}`](#{anchor('code-' + f)})")
+                lines.append(toc_link(f"`{f}`", code_aid(f), indent=1))
+
     # 第六篇与附录：过去只装配正文、不进目录，导致"写了但没人找得到"。
-    for path, title in ((PART6_PATH, "第六篇 【对比、批判与前瞻篇】"),
-                        (APPENDIX_PATH, "附录")):
-        body = read(path)
-        if not body:
-            continue
-        lines.append(f"- [{title}](#{anchor(title)})")
-        for h in re.findall(r"^##\s+(6\.\d[^\n]*)$", body, re.M):
-            lines.append(f"  - [{h.strip()}](#{anchor(h.strip())})")
+    body6 = read(PART6_PATH)
+    if body6:
+        lines.append(toc_link("第六篇 【对比、批判与前瞻篇】", "part-6"))
+        for h in re.findall(r"^##\s+(6\.(\d)[^\n]*)$", body6, re.M):
+            title, num = h[0].strip(), h[1]
+            lines.append(toc_link(title, f"sec-6-{num}", indent=1))
+
+    if read(APPENDIX_PATH):
+        lines.append(toc_link("附录", "appendix"))
+
     return lines
 
 
 def build_code_section() -> list[str]:
     """把 code/ 下的真实代码嵌入白皮书，确保文档与代码同源。"""
     if not os.path.isdir(CODE_DIR):
-        return ["# 第五篇 【实践与代码篇】可运行算法原型库", "",
+        return [aid_tag("part-5"),
+                "# 第五篇 【实践与代码篇】可运行算法原型库", "",
                 "> 🚧 代码库尚在建设中（见 `docs/重建计划.md` P3）。", ""]
     files = sorted(f for f in os.listdir(CODE_DIR)
                    if f.endswith(".py") and not f.startswith("_"))
     if not files:
-        return ["# 第五篇 【实践与代码篇】可运行算法原型库", "",
+        return [aid_tag("part-5"),
+                "# 第五篇 【实践与代码篇】可运行算法原型库", "",
                 "> 🚧 代码库尚在建设中。", ""]
-    out = ["# 第五篇 【实践与代码篇】可运行算法原型库", "",
+    out = [aid_tag("part-5"),
+           "# 第五篇 【实践与代码篇】可运行算法原型库", "",
            "本篇所有代码均**逐字取自 `code/` 目录下的真实文件**，由 "
            "`tools/build_whitepaper.py` 自动嵌入。",
            "换句话说：**你在这里看到的代码，就是仓库里能跑起来的那个文件**，"
@@ -172,6 +277,7 @@ def build_code_section() -> list[str]:
            "运行环境与依赖见 `code/requirements.txt`（仅 numpy）与 `code/README.md`。", ""]
     for f in files:
         src = open(os.path.join(CODE_DIR, f), encoding="utf-8").read().rstrip()
+        out.append(aid_tag(code_aid(f)))
         out.append(f"### `code/{f}`")
         out.append("")
         out.append("```python")
@@ -212,6 +318,16 @@ def source_stamp() -> str:
     return "src-" + h.hexdigest()[:12]
 
 
+def collect_toc_anchors(toc_lines: list[str]) -> list[str]:
+    """从目录行提取全部 href 锚点（不含 #）。"""
+    aids = []
+    for ln in toc_lines:
+        m = re.search(r"\]\(#([^)]+)\)", ln)
+        if m:
+            aids.append(m.group(1))
+    return aids
+
+
 def main() -> None:
     lectures: dict[str, str] = {}
     missing: list[str] = []
@@ -224,6 +340,8 @@ def main() -> None:
             lectures[key] = ""
             missing.append(key)
 
+    toc_lines = build_toc(lectures)
+
     doc: list[str] = []
     doc.append(read(FRONT_MATTER_PATH) or "# 燃气轮机智能设计与前沿算法自学白皮书")
     doc.append("")
@@ -235,17 +353,19 @@ def main() -> None:
     doc.append("")
     doc.append("## 目录")
     doc.append("")
-    doc.extend(build_toc(lectures))
+    doc.extend(toc_lines)
     doc.append("")
     doc.append("---")
     doc.append("")
+
     if os.path.exists(CH0_PATH):
-        doc.append(read(CH0_PATH))
+        doc.append(decorate_chapter0(read(CH0_PATH)))
         doc.append("")
         doc.append("---")
         doc.append("")
 
-    for start, end, ptitle_full, ptitle, pintro in PARTS:
+    for part_idx, (start, end, ptitle_full, ptitle, pintro) in enumerate(PARTS, start=1):
+        doc.append(aid_tag(f"part-{part_idx}"))
         doc.append(f"# {ptitle_full} {ptitle}")
         doc.append("")
         doc.append(pintro)
@@ -255,8 +375,9 @@ def main() -> None:
         for i in range(start, end + 1):
             key = f"{i:02d}"
             if lectures[key]:
-                doc.append(lectures[key])
+                doc.append(decorate_lecture(lectures[key], key))
             else:
+                doc.append(aid_tag(f"lec-{key}"))
                 doc.append(f"### 【第{key}讲】待重建（对应论文 {LECTURE_PAPER[key]} · "
                            f"{PAPER_SHORT[LECTURE_PAPER[key]]}）")
                 doc.append("")
@@ -271,8 +392,9 @@ def main() -> None:
     doc.append("---")
     doc.append("")
     if os.path.exists(PART6_PATH):
-        doc.append(read(PART6_PATH))
+        doc.append(decorate_part6(read(PART6_PATH)))
     else:
+        doc.append(aid_tag("part-6"))
         doc.append("# 第六篇 【对比、批判与前瞻篇】")
         doc.append("")
         doc.append("> 🚧 待重建：全景对比矩阵将逐条标注数据来源，"
@@ -281,14 +403,36 @@ def main() -> None:
     doc.append("---")
     doc.append("")
     if os.path.exists(APPENDIX_PATH):
-        doc.append(read(APPENDIX_PATH))
+        body_app = read(APPENDIX_PATH)
+        doc.append(aid_tag("appendix"))
+        # 若附录自身以 # 开头则原样，否则包一层
+        if body_app.lstrip().startswith("#"):
+            doc.append(body_app)
+        else:
+            doc.append("# 附录")
+            doc.append("")
+            doc.append(body_app)
     doc.append("")
 
     text = normalize_fences("\n".join(doc) + "\n")
+
+    # 装配期自检：目录里的每一个锚点都必须在正文中以 id= 形式出现
+    toc_aids = collect_toc_anchors(toc_lines)
+    body_ids = set(re.findall(r'<a\s+id="([^"]+)"', text))
+    missing_aids = [a for a in toc_aids if a not in body_ids]
+    if missing_aids:
+        raise SystemExit(
+            "[FAIL] 目录锚点在正文中缺失（跳转会坏）：" + "、".join(missing_aids)
+        )
+    dup = [a for a in toc_aids if toc_aids.count(a) > 1]
+    if dup:
+        raise SystemExit("[FAIL] 目录锚点重复：" + "、".join(sorted(set(dup))))
+
     open(OUT, "w", encoding="utf-8").write(text)
     n_ok = 20 - len(missing)
     print(f"[OK] 已生成 {os.path.relpath(OUT, ROOT)}")
     print(f"     讲稿完成 {n_ok}/20" + (f"，待重建：{'、'.join(missing)}" if missing else ""))
+    print(f"     目录锚点 {len(toc_aids)} 条，全部命中正文 id")
 
 
 if __name__ == "__main__":

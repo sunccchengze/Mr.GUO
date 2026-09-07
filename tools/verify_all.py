@@ -229,6 +229,50 @@ def verify_whitepaper() -> None:
                   f"小节{len(subs)}/5，占位符={'有🔴' if placeholder else '无'}")
         check("A6-篇完整性", ok, detail if ok else f"第六篇不达标（{detail}）")
 
+    # A10：目录跳转必须全部可解析。
+    # 旧版用"标题 slug 猜测"生成 `#中文锚点`，与正文标题、与 GitHub GFM 三者互不一致，
+    # 目录几乎全坏却无人验收。现约定：装配脚本在每个目录目标标题上方写入
+    # `<a id="…">` 显式锚点，目录一律链到这些稳定 id；本项核对 TOC ↔ id 双向对齐。
+    # （编号避开已占用的 A8-算式自洽 / A9-公式结构。）
+    toc_m = re.search(r"^## 目录\s*\n(.*?)(?:\n---|\n# )", text, re.S | re.M)
+    if not toc_m:
+        check("A10-目录跳转", False, "白皮书缺少「目录」节")
+    else:
+        toc_body = toc_m.group(1)
+        toc_links = re.findall(r"\]\(#([^)]+)\)", toc_body)
+        body_ids = set(re.findall(r'<a\s+id="([^"]+)"', text))
+        missing = [a for a in toc_links if a not in body_ids]
+        # 必需锚点：第零章 + 20 讲 + 六篇 + 代码模块 + 第六篇 5 小节
+        required = (
+            ["ch0", "ch0-1", "ch0-2", "ch0-3"]
+            + [f"part-{i}" for i in range(1, 7)]
+            + [f"lec-{i:02d}" for i in range(1, 21)]
+            + [f"sec-6-{i}" for i in range(1, 6)]
+        )
+        lack_req = [a for a in required if a not in toc_links or a not in body_ids]
+        # 目录不得再出现依赖 slug 猜测的中文长锚点（回归守卫）
+        legacy = [a for a in toc_links if re.search(r"[\u4e00-\u9fff]", a)]
+        ok = (
+            len(toc_links) >= 40
+            and not missing
+            and not lack_req
+            and not legacy
+        )
+        if ok:
+            detail = f"目录 {len(toc_links)} 条锚点全部命中正文 id，无中文 slug 残留"
+        else:
+            bits = []
+            if missing:
+                bits.append("未命中：" + "、".join(missing[:5]))
+            if lack_req:
+                bits.append("缺必需：" + "、".join(lack_req[:5]))
+            if legacy:
+                bits.append("中文 slug 残留：" + "、".join(legacy[:3]))
+            if len(toc_links) < 40:
+                bits.append(f"条目过少（{len(toc_links)}）")
+            detail = "；".join(bits) or "目录跳转不达标"
+        check("A10-目录跳转", ok, detail)
+
 
 # --------------------------------------------------------------------------- B
 def verify_code() -> None:
