@@ -896,69 +896,28 @@ def verify_rigor() -> None:
           f"{len(wrong)} 处自陈算式算错：" + "；".join(wrong[:4])
           if wrong else f"{n_expr} 条自陈算式全部复算通过（容差 3%）")
 
-    # ---- A9：LaTeX 结构完整 + KaTeX/GFM 安全
-    # 公式崩了不影响任何既有检查，却会让读者看到一片乱码——属于"交付质量"硬伤。
-    # 2026-09-07 补：GitHub/KaTeX 上 `\mathbf x^*_{\rm EI}` 会报
-    # "Missing open brace for superscript"——因为 (1) `*` 被 GFM 当强调吃掉，
-    # (2) `>`/`<` 被转成 `&gt;`/`&lt;` 后 KaTeX 读到坏 token。
-    # 规范写法：`\mathbf{x}^{\ast}_{\mathrm{EI}}`、`\gt`/`\lt`。
-    # 2026-09-07 再补：本仓库用户侧预览**不渲染**行内 `$…$`（GFM 与 `_` 冲突），
-    # 会把 `$\mathrm{Ma}=0.01$` 原样甩给读者。规范：正文用 Unicode 纯文本
-    # （Ma = 0.01、β = 0.1、L/D）；复杂公式**只**走 `$$…$$` 独立块。
+    # ---- A9：公式对用户预览可读（禁止任何 $ / $$ / 裸 LaTeX 命令）
+    # 2026-09-07 实锤：本仓库用户侧预览**既不渲染行内 $…$，也不渲染 $$…$$**，
+    # 会把源码原样甩给读者。规范：全部数学用 Unicode 纯文本；
+    # 独立公式行用 **〔式〕** 前缀。禁止 $、$$、\begin{cases} 等。
     broken = []
     for f in prose:
         body = strip_code(open(f, encoding="utf-8").read())
-        if body.count("$$") % 2:
-            broken.append(f"{os.path.basename(f)}: $$ 块数为奇数")
-        # 行内 $ 一律禁用（含奇数/偶数）：预览器不渲染，读者只看到源码
-        body_no_display = re.sub(r"\$\$.*?\$\$", "", body, flags=re.S)
-        inline_dollars = re.findall(r"(?<!\\)\$", body_no_display)
-        if inline_dollars:
+        n_dollar = len(re.findall(r"(?<!\\)\$", body))
+        if n_dollar:
             broken.append(
-                f"{os.path.basename(f)}: 禁用行内 $…$（改 Unicode 或 $$ 块），检出 {len(inline_dollars)} 个 $"
+                f"{os.path.basename(f)}: 禁用 $ / $$（预览不渲染），检出 {n_dollar} 个 $"
             )
-        segs = re.findall(r"\$\$(.*?)\$\$", body, re.S)
-        # 若仍有行内 $（上面已记 broken），不再纳入 segs 结构检查，避免噪声
-        for seg in segs:
-            if seg.count("{") != seg.count("}"):
-                broken.append(f"{os.path.basename(f)}: 花括号不平衡「{seg.strip()[:40]}」")
-                continue
-            if re.search(r"\\mathbf\s+[A-Za-z]", seg):
-                broken.append(f"{os.path.basename(f)}: \\mathbf 未加括号「{seg.strip()[:40]}」")
-            if re.search(r"\\hat\s+[A-Za-z]", seg):
-                broken.append(f"{os.path.basename(f)}: \\hat 未加括号「{seg.strip()[:40]}」")
-            if re.search(r"\\rm\s+", seg):
-                broken.append(f"{os.path.basename(f)}: 禁用 \\rm，改用 \\mathrm{{}}「{seg.strip()[:40]}」")
-            # bare * as superscript/operator (Markdown-hostile); allow \ast \times \*
-            if re.search(r"(?<![\\{])\*(?![\s]|$)", seg) and r"\ast" not in seg:
-                if re.search(r"\^[^{*}]*\*|\*\s*_|_\s*\*", seg) or re.search(r"[A-Za-z0-9}]\*[A-Za-z0-9{]", seg):
-                    broken.append(f"{os.path.basename(f)}: 公式内裸 *（应 \\ast）「{seg.strip()[:40]}」")
-            # bare < > that HTML-escape into &lt; &gt; and break KaTeX
-            if re.search(r"(?<!\\)[<>]", seg):
-                broken.append(f"{os.path.basename(f)}: 公式内裸 <>（应 \\lt/\\gt）「{seg.strip()[:40]}」")
-
-            # GFM-hostile environments: & and \\[2pt] inside cases/array break rendering
-            if re.search(r"\\begin\{(cases|pmatrix|bmatrix|array|align\*?|aligned)\}", seg):
-                broken.append(
-                    f"{os.path.basename(f)}: 禁用 cases/pmatrix/bmatrix/array（GFM 易炸）「{seg.strip()[:40]}」"
-                )
-            if re.search(r"\\\\\[", seg):  # \\[
-                broken.append(f"{os.path.basename(f)}: 禁用\\\\[2pt] 间距「{seg.strip()[:40]}」")
-            # multi-letter symbols (Ma/Re/AoA): bare form renders as letter-soup in KaTeX
-            def _bare_multi(seg, tok):
-                # strip already-wrapped \mathrm{tok} then look for remaining tok
-                tmp = re.sub(rf"\\mathrm\{{{tok}\}}", "", seg)
-                tmp = re.sub(rf"\\text\{{{tok}\}}", "", tmp)
-                return re.search(rf"(?<![A-Za-z\\]){tok}(?![A-Za-z])", tmp) is not None
-            for _tok in ("AoA", "Ma", "Re"):
-                if _bare_multi(seg, _tok):
-                    broken.append(
-                        f"{os.path.basename(f)}: 多字母符号 {_tok} 应写 \\mathrm{{{_tok}}}「{seg.strip()[:40]}」"
-                    )
-            # degree superscript must be braced: ^{\circ} not ^\circ
-            if re.search(r"\^\\circ(?!\})", seg) or "°" in seg:
-                broken.append(f"{os.path.basename(f)}: 角度应写 ^{{\\circ}}「{seg.strip()[:40]}」")
-    # de-dup while preserving order
+        for m in re.finditer(r"\\([A-Za-z]{2,})", body):
+            broken.append(
+                f"{os.path.basename(f)}: 裸 LaTeX 命令 \\{m.group(1)}（改 Unicode）"
+            )
+            if sum(1 for b in broken if "裸 LaTeX" in b) > 20:
+                break
+        if re.search(r"\\begin\{(cases|pmatrix|bmatrix|array|align\*?|aligned)\}", body):
+            broken.append(f"{os.path.basename(f)}: 禁用 cases/pmatrix/bmatrix/array")
+        if "\\\\[" in body:
+            broken.append(f"{os.path.basename(f)}: 禁用 \\\\[2pt] 间距")
     seen = set()
     broken_u = []
     for b in broken:
@@ -967,8 +926,8 @@ def verify_rigor() -> None:
             broken_u.append(b)
     broken = broken_u
     check("A9-公式结构", not broken,
-          f"{len(broken)} 处 LaTeX 结构损坏：" + "；".join(broken[:4])
-          if broken else "全部讲义 $$ 成对、无行内 $、花括号平衡、无 KaTeX 敌对写法")
+          f"{len(broken)} 处公式不可读：" + "；".join(broken[:4])
+          if broken else "全部讲义无 $ / $$ / 裸 LaTeX，公式为 Unicode 纯文本")
 
     # ---- D8：五份根索引文档的数字可溯（第十三轮补）。A5 只扫白皮书与讲义，
     # README/全集/公开/付费/链接里的 14.0%、0.42% 类断言长期无裁判——
