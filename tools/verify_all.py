@@ -929,6 +929,14 @@ def verify_rigor() -> None:
             # bare < > that HTML-escape into &lt; &gt; and break KaTeX
             if re.search(r"(?<!\\)[<>]", seg):
                 broken.append(f"{os.path.basename(f)}: 公式内裸 <>（应 \\lt/\\gt）「{seg.strip()[:40]}」")
+
+            # GFM-hostile environments: & and \\[2pt] inside cases/array break rendering
+            if re.search(r"\\begin\{(cases|pmatrix|bmatrix|array|align\*?|aligned)\}", seg):
+                broken.append(
+                    f"{os.path.basename(f)}: 禁用 cases/pmatrix/bmatrix/array（GFM 易炸）「{seg.strip()[:40]}」"
+                )
+            if re.search(r"\\\\\[", seg):  # \\[
+                broken.append(f"{os.path.basename(f)}: 禁用\\\\[2pt] 间距「{seg.strip()[:40]}」")
             # multi-letter symbols (Ma/Re/AoA): bare form renders as letter-soup in KaTeX
             def _bare_multi(seg, tok):
                 # strip already-wrapped \mathrm{tok} then look for remaining tok
