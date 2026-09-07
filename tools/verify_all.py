@@ -902,16 +902,23 @@ def verify_rigor() -> None:
     # "Missing open brace for superscript"——因为 (1) `*` 被 GFM 当强调吃掉，
     # (2) `>`/`<` 被转成 `&gt;`/`&lt;` 后 KaTeX 读到坏 token。
     # 规范写法：`\mathbf{x}^{\ast}_{\mathrm{EI}}`、`\gt`/`\lt`。
+    # 2026-09-07 再补：本仓库用户侧预览**不渲染**行内 `$…$`（GFM 与 `_` 冲突），
+    # 会把 `$\mathrm{Ma}=0.01$` 原样甩给读者。规范：正文用 Unicode 纯文本
+    # （Ma = 0.01、β = 0.1、L/D）；复杂公式**只**走 `$$…$$` 独立块。
     broken = []
     for f in prose:
         body = strip_code(open(f, encoding="utf-8").read())
         if body.count("$$") % 2:
             broken.append(f"{os.path.basename(f)}: $$ 块数为奇数")
-        inline = len(re.findall(r"(?<!\\)\$", re.sub(r"\$\$.*?\$\$", "", body, flags=re.S)))
-        if inline % 2:
-            broken.append(f"{os.path.basename(f)}: 行内 $ 数为奇数")
+        # 行内 $ 一律禁用（含奇数/偶数）：预览器不渲染，读者只看到源码
+        body_no_display = re.sub(r"\$\$.*?\$\$", "", body, flags=re.S)
+        inline_dollars = re.findall(r"(?<!\\)\$", body_no_display)
+        if inline_dollars:
+            broken.append(
+                f"{os.path.basename(f)}: 禁用行内 $…$（改 Unicode 或 $$ 块），检出 {len(inline_dollars)} 个 $"
+            )
         segs = re.findall(r"\$\$(.*?)\$\$", body, re.S)
-        segs += re.findall(r"(?<!\$)\$(?!\$)((?:\\.|[^$])*?)\$(?!\$)", body)
+        # 若仍有行内 $（上面已记 broken），不再纳入 segs 结构检查，避免噪声
         for seg in segs:
             if seg.count("{") != seg.count("}"):
                 broken.append(f"{os.path.basename(f)}: 花括号不平衡「{seg.strip()[:40]}」")
@@ -961,7 +968,7 @@ def verify_rigor() -> None:
     broken = broken_u
     check("A9-公式结构", not broken,
           f"{len(broken)} 处 LaTeX 结构损坏：" + "；".join(broken[:4])
-          if broken else "全部讲义 $$/$ 成对、花括号平衡、无 KaTeX 敌对写法")
+          if broken else "全部讲义 $$ 成对、无行内 $、花括号平衡、无 KaTeX 敌对写法")
 
     # ---- D8：五份根索引文档的数字可溯（第十三轮补）。A5 只扫白皮书与讲义，
     # README/全集/公开/付费/链接里的 14.0%、0.42% 类断言长期无裁判——
