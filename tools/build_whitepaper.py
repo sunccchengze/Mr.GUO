@@ -72,6 +72,14 @@ FRONT_MATTER_PATH = os.path.join(ROOT, "docs", "front_matter.md")
 CH0_PATH = os.path.join(ROOT, "docs", "chapter0.md")
 PART6_PATH = os.path.join(ROOT, "docs", "part6.md")
 APPENDIX_PATH = os.path.join(ROOT, "docs", "appendix.md")
+BRIDGE_DIR = os.path.join(ROOT, "docs", "bridges")
+# 篇首过桥：插在对应 part 标题之后、该篇第一讲之前
+BRIDGES = {
+    1: "bridge_A.md",  # 第零章 → 第一篇
+    2: "bridge_B.md",  # 采样 → 生成
+    3: "bridge_C.md",  # 优化 → 场预测
+    4: "bridge_D.md",  # 网络 → 物理实验
+}
 
 # ---------------------------------------------------------------------------
 # 稳定锚点：目录与正文共用同一套 ID，渲染器无关
@@ -229,13 +237,20 @@ def build_toc(lectures: dict[str, str]) -> list[str]:
             lines.append(toc_link(title, f"ch0-{num}", indent=1))
 
     # 篇序号：PARTS 顺序即 1..4
+    bridge_titles = {
+        1: "过桥 A · 从第零章到采样主线",
+        2: "过桥 B · 从采样到潜空间",
+        3: "过桥 C · 从优化到场预测",
+        4: "过桥 D · 从网络回到物理",
+    }
     for part_idx, (start, end, _, ptitle, _) in enumerate(PARTS, start=1):
         lines.append(toc_link(ptitle, f"part-{part_idx}"))
+        if part_idx in bridge_titles:
+            lines.append(toc_link(bridge_titles[part_idx], f"bridge-{chr(96+part_idx)}", indent=1))
         for i in range(start, end + 1):
             key = f"{i:02d}"
             title = lecture_title(lectures[key], f"第{key}讲")
             lines.append(toc_link(title, f"lec-{key}", indent=1))
-
     if os.path.isdir(CODE_DIR) and [f for f in os.listdir(CODE_DIR) if f.endswith(".py")]:
         lines.append(toc_link("第五篇 【实践与代码篇】可运行算法原型库", "part-5"))
         for f in sorted(os.listdir(CODE_DIR)):
@@ -370,6 +385,13 @@ def main() -> None:
         doc.append("")
         doc.append(pintro)
         doc.append("")
+        # 可读性优化：篇首过桥（换脑子）
+        bfile = BRIDGES.get(part_idx)
+        if bfile:
+            bpath = os.path.join(BRIDGE_DIR, bfile)
+            if os.path.exists(bpath):
+                doc.append(read(bpath))
+                doc.append("")
         doc.append("---")
         doc.append("")
         for i in range(start, end + 1):
