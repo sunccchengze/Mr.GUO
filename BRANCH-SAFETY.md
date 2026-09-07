@@ -152,8 +152,8 @@ git bundle create /tmp/backup.bundle HEAD
 
 | 日期 | 动作 | 结果 |
 | :--- | :--- | :--- |
-| 2026-09-07 | 引入本手册；分支 `arena/01a07a05-mr-guo` 含 TOC 修复 + 分叉吸收 | 见下方实测 |
-| 2026-09-07 | `git push origin arena/01a07a05-mr-guo:main`（快进） | 待写入（执行后更新 tip SHA） |
+| 2026-09-07 | 引入本手册；分支 `arena/01a07a05-mr-guo` 含 TOC 修复 + 分叉吸收 | 已落地 |
+| 2026-09-07 | `git push origin arena/01a07a05-mr-guo:main`（快进） | ✅ **成功**：`main` 与会话分支同指 `493311f`；**0 个 PR**；会话通道仍可用（本提交即证明） |
 
 ### 从 SCZ_Archived 学到、已在本仓使用的招
 

@@ -2,6 +2,9 @@
 
 欢迎访问 **Mr.GUO** 仓库。本项目对郭振东老师在**叶轮机械气动热力学**、**先进优化算法（贝叶斯优化/代理模型）**以及**人工智能赋能工程设计（AI4Turbomachinery / 物理增强神经算子）**领域的学术成果、研究论文及技术文档进行了系统性的交融合并与分类归档。
 
+> 🩸 **Arena / Agent 动手前必读：** [`BRANCH-SAFETY.md`](./BRANCH-SAFETY.md)  
+> 内容进 `main` 用 `git push origin <分支>:main` **快进推送**——不开 PR、不合 PR，会话通道不中断。学自 [`SCZ_Archived`](https://github.com/sunccchengze/SCZ_Archived)。
+
 ---
 
 ## 📑 核心文档快速导航
