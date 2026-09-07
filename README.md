@@ -27,7 +27,7 @@
 | **06** | 2023 | Generative Multiform Bayesian Optimization | *IEEE Trans. Cybernetics* | `Generative_Multiform_Bayesian_Optimization.pdf` | GMFoO 多隐空间多形式生成式优化 |
 | **07** | 2023 | An efficient surrogate-assisted differential evolution algorithm for turbomachinery cascades optimization with more than 100 variables | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963823005710-main.pdf` | GSDE 超百维代理差分算法 / 3.5级压气机优化 |
 | **08** | 2024 | Knowledge transfer accelerated turbine blade optimization via an sample-weighted variational autoencoder | *Aerosp. Sci. Technol.* | `1-s2.0-S1270963824001317-main.pdf` | SW-VAE 样本加权自编码器 / 跨任务知识迁移 |
-| **09** | 2024 | Experimental investigation on the aerodynamic performance of a transonic turbine rotor with non-axisymmetric endwall | *Aerosp. Sci. Technol.* | `S1270963824001482.htm` | 跨声速环形叶栅风洞实验 / 损失实测降低 14.0%(MA=0.8) |
+| **09** | 2024 | Experimental investigation on the aerodynamic performance of a transonic turbine rotor with non-axisymmetric endwall | *Aerosp. Sci. Technol.* | `S1270963824001482.htm` | 跨声速环形叶栅风洞实验 / 损失实测降低 14.0%（MA=0.8，见事实卡 P09） |
 | **10** | 2024 | Aerothermal optimization of a turbine rotor tip configuration based on free-form deformation approach | *Int. J. Heat Fluid Flow* | `S0142727X24003692.htm` | FFD 自由变形 / 涡轮转子叶尖凹槽气动热优化 |
 | **11** | 2024 | A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems | *Eng. Optimization* | `A dynamic aggregation strategy enhanced efficient global optimization algorithm for solving high-dimensional turbomachinery design problems.pdf` | DA-EGO 动态子空间分解与聚合算法 |
 | **12** | 2024 | Enhancing the Generalization Ability of Endwall Film Cooling Prediction by Incorporating Superposition Principle into Transformer-based Neural Operator | *SSRN / Elsevier* | `ssrn-4869789.pdf` | SDNO 叠加深层神经算子 / 气膜小样本大外推 |
@@ -80,6 +80,8 @@ Mr.GUO/
 ├── 付费论文五篇整理.md                             # ASME/SPIE 专题文档
 ├── 论文链接整理.md                                 # 核心文献链接与检索入口
 ├── docs/                                           # 白皮书源文件（白皮书由此装配，勿直接改产物）
+│   ├── front_matter.md                             # 著者前言与自学导读（含统一口径说明）
+│   ├── chapter0.md                                 # 第零章：初高中物理/数学前置铺垫
 │   ├── lectures/01–20.md                           # 20 讲讲稿（每讲固定 6 节）
 │   ├── part6.md                                    # 第六篇：全景对比矩阵 / 横向批判 / 前瞻选题
 │   └── 重建计划.md                                 # 验收标准、进度与成绩单（本仓库的"宪法"）
@@ -92,11 +94,11 @@ Mr.GUO/
 ├── tools/                                          # 装配、抽取与自动验收脚本
 │   ├── extract_corpus.py                           # PDF/HTML → 可检索语料（需 pypdf）
 │   ├── build_whitepaper.py                         # docs/lectures + code/ → 白皮书
-│   ├── verify_all.py                               # 一键验收：目标 A–F 共 29 项
+│   ├── verify_all.py                               # 一键验收：目标 A–F 共 43 项
 │   ├── verify_whitepaper.py                        # 白皮书逐讲明细（定位哪一讲不达标）
 │   └── selftest_verifier.py                        # 反身测试：证明验收器对缺陷真的敏感
 ├── skills/omni_scholar/                            # 文献核验技能包（可运行，非占位）
-├── images/                                         # 37 张配图：既有 12 张中英成对 + 新增（前 5 讲成对、后 9 讲仅中文版）；20/20 讲均配图
+├── images/                                         # 73 个图文件：31 张主题图（6 主题中英成对旧图 + 5 对新成对 + 9 张仅中文版）+ 42 张手绘讲稿图（第 01/04 讲各 3 张、其余每讲 §2/§3 各 1 张）；白皮书/讲义共 77 处引用，零死链零孤儿，20/20 讲均配图
 ├── Makefile                                        # venv / corpus / whitepaper / checks / verify / selftest
 └── README.md                                       # 仓库导航与全景索引
 ```
