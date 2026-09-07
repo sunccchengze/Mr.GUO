@@ -12,6 +12,8 @@
 - 💎 **[付费论文五篇整理.md](./付费论文五篇整理.md)** —— ASME / SPIE 重点期刊与会议论文精细化专题整理
 - 🔗 **[论文链接整理.md](./论文链接整理.md)** —— 核心发表物 DOI 与出版商检索入口索引
 - 📁 **[郭老师论文/](./郭老师论文/)** —— 本地论文原件存储目录（13 篇 PDF 全文 + 2 篇 ScienceDirect 页面 HTML；后者**仅含摘要与著录**，见论文 09、10）
+- 📦 **[archive/from_01a00377/](./archive/from_01a00377/)** —— 自历史分叉分支吸收：16 篇出版商摘要、9 篇**非团队**排除清单、战略备忘（**不**改 01–20 主口径）
+- 📎 **[corpus/related/](./corpus/related/)** —— 主索引外的相关文献（目前 **R01**：2022 CJA 多保真尺度因子）
 
 ---
 
@@ -90,7 +92,9 @@ Mr.GUO/
 ├── corpus/                                         # 事实底座：DOI 核验、20 张事实卡、证据分级
 │   ├── doi_verification.md                         # 20 篇逐条核查（曾查出 3 处硬伤）
 │   ├── facts/P01–P20.md                            # 结构化事实卡（数字的唯一来源）
-│   └── web_evidence/P04,05,13,14,20.md             # 无原文论文的补全依据
+│   ├── web_evidence/P04,05,13,14,20.md             # 无原文论文的补全依据
+│   └── related/                                    # 主索引外相关文献（R01 等，不计入 20 篇）
+├── archive/from_01a00377/                          # 分叉分支吸收物：摘要库 / 排除清单 / 技能 catalog 索引
 ├── tools/                                          # 装配、抽取与自动验收脚本
 │   ├── extract_corpus.py                           # PDF/HTML → 可检索语料（需 pypdf）
 │   ├── build_whitepaper.py                         # docs/lectures + code/ → 白皮书
