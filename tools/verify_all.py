@@ -929,6 +929,20 @@ def verify_rigor() -> None:
             # bare < > that HTML-escape into &lt; &gt; and break KaTeX
             if re.search(r"(?<!\\)[<>]", seg):
                 broken.append(f"{os.path.basename(f)}: 公式内裸 <>（应 \\lt/\\gt）「{seg.strip()[:40]}」")
+            # multi-letter symbols (Ma/Re/AoA): bare form renders as letter-soup in KaTeX
+            def _bare_multi(seg, tok):
+                # strip already-wrapped \mathrm{tok} then look for remaining tok
+                tmp = re.sub(rf"\\mathrm\{{{tok}\}}", "", seg)
+                tmp = re.sub(rf"\\text\{{{tok}\}}", "", tmp)
+                return re.search(rf"(?<![A-Za-z\\]){tok}(?![A-Za-z])", tmp) is not None
+            for _tok in ("AoA", "Ma", "Re"):
+                if _bare_multi(seg, _tok):
+                    broken.append(
+                        f"{os.path.basename(f)}: 多字母符号 {_tok} 应写 \\mathrm{{{_tok}}}「{seg.strip()[:40]}」"
+                    )
+            # degree superscript must be braced: ^{\circ} not ^\circ
+            if re.search(r"\^\\circ(?!\})", seg) or "°" in seg:
+                broken.append(f"{os.path.basename(f)}: 角度应写 ^{{\\circ}}「{seg.strip()[:40]}」")
     # de-dup while preserving order
     seen = set()
     broken_u = []
