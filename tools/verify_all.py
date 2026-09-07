@@ -896,8 +896,12 @@ def verify_rigor() -> None:
           f"{len(wrong)} 处自陈算式算错：" + "；".join(wrong[:4])
           if wrong else f"{n_expr} 条自陈算式全部复算通过（容差 3%）")
 
-    # ---- A9：LaTeX 结构完整（$$ 成对、行内 $ 成对、公式内花括号平衡）
-    # 公式崩了不影响任何既有检查，却会让读者看到一片乱码——属于\"交付质量\"硬伤。
+    # ---- A9：LaTeX 结构完整 + KaTeX/GFM 安全
+    # 公式崩了不影响任何既有检查，却会让读者看到一片乱码——属于"交付质量"硬伤。
+    # 2026-09-07 补：GitHub/KaTeX 上 `\mathbf x^*_{\rm EI}` 会报
+    # "Missing open brace for superscript"——因为 (1) `*` 被 GFM 当强调吃掉，
+    # (2) `>`/`<` 被转成 `&gt;`/`&lt;` 后 KaTeX 读到坏 token。
+    # 规范写法：`\mathbf{x}^{\ast}_{\mathrm{EI}}`、`\gt`/`\lt`。
     broken = []
     for f in prose:
         body = strip_code(open(f, encoding="utf-8").read())
@@ -906,12 +910,36 @@ def verify_rigor() -> None:
         inline = len(re.findall(r"(?<!\\)\$", re.sub(r"\$\$.*?\$\$", "", body, flags=re.S)))
         if inline % 2:
             broken.append(f"{os.path.basename(f)}: 行内 $ 数为奇数")
-        for m in re.finditer(r"\$\$(.*?)\$\$", body, re.S):
-            if m.group(1).count("{") != m.group(1).count("}"):
-                broken.append(f"{os.path.basename(f)}: 花括号不平衡「{m.group(1).strip()[:40]}」")
+        segs = re.findall(r"\$\$(.*?)\$\$", body, re.S)
+        segs += re.findall(r"(?<!\$)\$(?!\$)((?:\\.|[^$])*?)\$(?!\$)", body)
+        for seg in segs:
+            if seg.count("{") != seg.count("}"):
+                broken.append(f"{os.path.basename(f)}: 花括号不平衡「{seg.strip()[:40]}」")
+                continue
+            if re.search(r"\\mathbf\s+[A-Za-z]", seg):
+                broken.append(f"{os.path.basename(f)}: \\mathbf 未加括号「{seg.strip()[:40]}」")
+            if re.search(r"\\hat\s+[A-Za-z]", seg):
+                broken.append(f"{os.path.basename(f)}: \\hat 未加括号「{seg.strip()[:40]}」")
+            if re.search(r"\\rm\s+", seg):
+                broken.append(f"{os.path.basename(f)}: 禁用 \\rm，改用 \\mathrm{{}}「{seg.strip()[:40]}」")
+            # bare * as superscript/operator (Markdown-hostile); allow \ast \times \*
+            if re.search(r"(?<![\\{])\*(?![\s]|$)", seg) and r"\ast" not in seg:
+                if re.search(r"\^[^{*}]*\*|\*\s*_|_\s*\*", seg) or re.search(r"[A-Za-z0-9}]\*[A-Za-z0-9{]", seg):
+                    broken.append(f"{os.path.basename(f)}: 公式内裸 *（应 \\ast）「{seg.strip()[:40]}」")
+            # bare < > that HTML-escape into &lt; &gt; and break KaTeX
+            if re.search(r"(?<!\\)[<>]", seg):
+                broken.append(f"{os.path.basename(f)}: 公式内裸 <>（应 \\lt/\\gt）「{seg.strip()[:40]}」")
+    # de-dup while preserving order
+    seen = set()
+    broken_u = []
+    for b in broken:
+        if b not in seen:
+            seen.add(b)
+            broken_u.append(b)
+    broken = broken_u
     check("A9-公式结构", not broken,
           f"{len(broken)} 处 LaTeX 结构损坏：" + "；".join(broken[:4])
-          if broken else "全部讲义 $$/$ 成对、公式花括号平衡")
+          if broken else "全部讲义 $$/$ 成对、花括号平衡、无 KaTeX 敌对写法")
 
     # ---- D8：五份根索引文档的数字可溯（第十三轮补）。A5 只扫白皮书与讲义，
     # README/全集/公开/付费/链接里的 14.0%、0.42% 类断言长期无裁判——
