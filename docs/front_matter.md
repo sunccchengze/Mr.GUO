@@ -96,3 +96,5 @@
 | 验收 | `make verify`（A–F）；语料需先 `make corpus` |
 
 > 修改讲稿请只改 `docs/lectures/`，再跑 `make whitepaper && make verify`。
+
+> **2026-09-07 证据收官：** 关键参数化维数（P07 18=15+3、P06 Z/C=13/3、P08 FFD 50 标量、P03 端壁 13、P11 28/60、P19 93）已回 PDF；B 级讲次禁止假拆零件表。详见 `docs/pedagogy/EVIDENCE_LEDGER.md`。

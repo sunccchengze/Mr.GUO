@@ -13,6 +13,6 @@
 | L04-DIM-060 | S0 | E | **done** | 与 PDF 一致 18/12×2+IGV 固定 |
 | L13-DIM-093 | S0 | E | **done** | 与 PDF 一致 45+3+45 |
 | L01-DIM-013 | S1 | M | **done** | 13=GAN 输入维，非控制点数 |
-| GLOSSARY-POINT-VS-VAR | S1 | M | open | 术语表已建，需在 06–09/16/18 首次出现处挂警告 |
+| GLOSSARY-POINT-VS-VAR | S1 | M | **done** | 06/07/16/09/18 已挂计数单位/对照说明 |
 | L03-LATEX-DOLLAR | S2 | W | open | 03.md 历史 `$` 公式；与全书 Unicode 政策对齐（下轮剥） |
-| L06/L07/L09/L16/L18-PARAM | S1 | E | open | 参数化族专题回 PDF（不阻塞本轮 L03 样板） |
+| L06/L07/L09/L16/L18-PARAM | S1 | E | **done** | 见 EVIDENCE_LEDGER 本轮追加；L09/L18 为 B 级边界锁定 |
