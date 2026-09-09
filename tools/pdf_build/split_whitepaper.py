@@ -7,6 +7,11 @@ SRC = os.path.join(ROOT, '燃气轮机智能设计与前沿算法自学白皮书
 OUT = os.path.join(ROOT, '分篇学习版')
 BASE = '燃气轮机智能设计与前沿算法自学白皮书'
 
+# 命名规则：{BASE}-{篇名}-{类型}.md；篇名与文件夹名一致（07-附录 的篇名为「附录」）
+P_NAMES = {'00-第零章': '第零章', '01-第一篇': '第一篇', '02-第二篇': '第二篇',
+           '03-第三篇': '第三篇', '04-第四篇': '第四篇', '05-第五篇': '第五篇',
+           '06-第六篇': '第六篇', '07-附录': '附录'}
+
 # (文件夹, 起始行, 结束行) —— 1-based闭区间；第零章含卷首(1-166)
 PARTS = [
     ('00-第零章', 1, 321),
@@ -50,7 +55,7 @@ def main():
         body = body.replace('./images/', '../../images/')
         d = os.path.join(OUT, folder)
         os.makedirs(d, exist_ok=True)
-        out = os.path.join(d, BASE + '-1.md')
+        out = os.path.join(d, f'{BASE}-{P_NAMES[folder]}-白皮书.md')
         open(out, 'w', encoding='utf-8').write(body)
         print(f'{folder}: 行{s}-{e}（{e - s + 1}行，{n_img}处图片）-> {os.path.basename(out)}')
 

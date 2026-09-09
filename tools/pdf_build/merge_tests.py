@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把检测题按"篇"合并：每篇产出 -2.md（检测卷合集）与 -3.md（答案合集）。
+"""把检测题按"篇"合并：每篇产出 {篇名}-检测卷合集.md 与 {篇名}-答案与评分合集.md。
 
 合并规则：各讲内容一字不改，仅标题降一级（# -> ##），并加来源注记。
 """
@@ -18,7 +18,7 @@ TESTS = {
     '03-第三篇': ['第10讲', '第11讲', '第12讲', '第13讲', '第14讲', '第15讲'],
     '04-第四篇': ['第16讲', '第17讲', '第18讲', '第19讲', '第20讲'],
 }
-NAMES = {'检测卷': ('检测卷合集', '-2.md'), '答案与评分': ('答案与评分合集', '-3.md')}
+NAMES = {'检测卷': '检测卷合集', '答案与评分': '答案与评分合集'}
 P_NAMES = {'00-第零章': '第零章', '01-第一篇': '第一篇', '02-第二篇': '第二篇',
            '03-第三篇': '第三篇', '04-第四篇': '第四篇'}
 
@@ -39,7 +39,7 @@ def demote(text):
 
 def build(folder, kind):
     lec = TESTS[folder]
-    cname, suffix = NAMES[kind]
+    cname = NAMES[kind]
     parts = ['# %s%s（共%d套）\n' % (P_NAMES[folder], cname, len(lec))]
     parts.append('> 合并说明：以下%d套卷原样合并，内容一字未改，仅标题降一级；' % len(lec)
                  + '来源见每套卷首注记。\n')
@@ -51,7 +51,7 @@ def build(folder, kind):
         parts.append(demote(body).rstrip() + '\n')
     d = os.path.join(OUT, folder)
     os.makedirs(d, exist_ok=True)
-    out = os.path.join(d, BASE + suffix)
+    out = os.path.join(d, f'{BASE}-{P_NAMES[folder]}-{cname}.md')
     open(out, 'w', encoding='utf-8').write('\n'.join(parts))
     print(f'{folder} {kind}: {len(lec)}套 -> {os.path.basename(out)}')
 
