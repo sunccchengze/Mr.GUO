@@ -437,6 +437,12 @@ def main() -> None:
     doc.append("")
 
     text = normalize_fences("\n".join(doc) + "\n")
+    # 学习回路相对链接改写：讲稿源在 docs/lectures/（根下 3 层），其中
+    # ../../../prompts/... 、../../../templates/... 以讲稿位置为基准；装配后的
+    # 白皮书位于仓库根，须改写为根相对路径（分篇切分脚本再按 2 层深度二次改写，
+    # 见 tools/pdf_build/split_whitepaper.py）
+    text = text.replace("](../../../prompts/", "](prompts/")
+    text = text.replace("](../../../templates/", "](templates/")
 
     # 装配期自检：目录里的每一个锚点都必须在正文中以 id= 形式出现
     toc_aids = collect_toc_anchors(toc_lines)
