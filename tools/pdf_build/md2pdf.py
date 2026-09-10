@@ -195,7 +195,14 @@ class Walker(HTMLParser):
                                            spaceBefore=1, spaceAfter=4))
             self.stack.pop()
         elif tag == 'p':
-            self.emit_para(self.c.cur_text_style())
+            st = self.c.cur_text_style()
+            if self.c.exam:
+                t0 = self.para_text().strip()
+                if re.match(r'^[A-D]\.\s', t0):
+                    st = self.c.style('option')        # 选项：独立段 + 悬挂缩进
+                elif re.match(r'^<b>\d{1,2}[.．]</b>', t0):
+                    st = self.c.style('question')      # 题干：段前留白便于填答
+            self.emit_para(st)
             self.stack.pop()
         elif tag in ('strong', 'b', 'em', 'i'):
             self.inline.append('</b>')
@@ -268,9 +275,10 @@ class Walker(HTMLParser):
 
 
 class Ctx:
-    def __init__(self, md_path, img_cache, col_width, frame_h):
+    def __init__(self, md_path, img_cache, col_width, frame_h, exam=False):
         self.story = []
         self.indent = 0
+        self.exam = exam
         self.md_dir = os.path.dirname(os.path.abspath(md_path))
         self.img_cache = img_cache
         self.col_width = col_width
@@ -279,20 +287,42 @@ class Ctx:
 
     def make_styles(self):
         S = {}
-        base = dict(fontName=NOTO, fontSize=8.2, leading=11.5, spaceBefore=0,
-                    spaceAfter=3, alignment=0)
+        if self.exam:
+            # 检测卷模式：单栏满版，字号加大便于手写；wordWrap=CJK 启用标点避头尾，
+            # 避免「区/分度」「无/力回天」这类词中折断。
+            base = dict(fontName=NOTO, fontSize=9.2, leading=13.5, spaceBefore=0,
+                        spaceAfter=3.5, alignment=0, wordWrap='CJK')
+            h1 = dict(fontSize=14, leading=17, spaceBefore=8, spaceAfter=3)
+            h2 = dict(fontSize=11, leading=14, spaceBefore=9, spaceAfter=3)
+            h3 = dict(fontSize=10, leading=13, spaceBefore=7, spaceAfter=3)
+            h4 = dict(fontSize=9.4, leading=12, spaceBefore=4, spaceAfter=2)
+            quote = dict(fontSize=8.6, leading=12.5, leftIndent=8,
+                         textColor=colors.HexColor('#333333'), spaceAfter=2.5)
+        else:
+            base = dict(fontName=NOTO, fontSize=8.2, leading=11.5, spaceBefore=0,
+                        spaceAfter=3, alignment=0)
+            h1 = dict(fontSize=12.5, leading=15, spaceBefore=8, spaceAfter=2)
+            h2 = dict(fontSize=10.2, leading=13, spaceBefore=6, spaceAfter=2)
+            h3 = dict(fontSize=9.2, leading=12, spaceBefore=4, spaceAfter=2)
+            h4 = dict(fontSize=8.6, leading=11.5, spaceBefore=3, spaceAfter=2)
+            quote = dict(fontSize=7.8, leading=11, leftIndent=8,
+                         textColor=colors.HexColor('#333333'), spaceAfter=2)
         S['body'] = ParagraphStyle('body', **base)
-        S['h1'] = ParagraphStyle('h1', parent=S['body'], fontName=NOTO_B, fontSize=12.5,
-                                 leading=15, spaceBefore=8, spaceAfter=2, keepWithNext=1)
-        S['h2'] = ParagraphStyle('h2', parent=S['body'], fontName=NOTO_B, fontSize=10.2,
-                                 leading=13, spaceBefore=6, spaceAfter=2, keepWithNext=1)
-        S['h3'] = ParagraphStyle('h3', parent=S['body'], fontName=NOTO_B, fontSize=9.2,
-                                 leading=12, spaceBefore=4, spaceAfter=2, keepWithNext=1)
-        S['h4'] = ParagraphStyle('h4', parent=S['body'], fontName=NOTO_B, fontSize=8.6,
-                                 leading=11.5, spaceBefore=3, spaceAfter=2, keepWithNext=1)
-        S['quote'] = ParagraphStyle('quote', parent=S['body'], fontSize=7.8, leading=11,
-                                    leftIndent=8, textColor=colors.HexColor('#333333'),
-                                    spaceAfter=2)
+        S['h1'] = ParagraphStyle('h1', parent=S['body'], fontName=NOTO_B,
+                                 keepWithNext=1, **h1)
+        S['h2'] = ParagraphStyle('h2', parent=S['body'], fontName=NOTO_B,
+                                 keepWithNext=1, **h2)
+        S['h3'] = ParagraphStyle('h3', parent=S['body'], fontName=NOTO_B,
+                                 keepWithNext=1, **h3)
+        S['h4'] = ParagraphStyle('h4', parent=S['body'], fontName=NOTO_B,
+                                 keepWithNext=1, **h4)
+        S['quote'] = ParagraphStyle('quote', parent=S['body'], wordWrap='CJK', **quote)
+        if self.exam:
+            S['option'] = ParagraphStyle('option', parent=S['body'],
+                                         leftIndent=14, firstLineIndent=-14,
+                                         spaceAfter=2.5)
+            S['question'] = ParagraphStyle('question', parent=S['body'],
+                                           spaceBefore=5.5, spaceAfter=2)
         S['code'] = ParagraphStyle('code', parent=S['body'], fontName=NOTO, fontSize=6.6,
                                    leading=8, leftIndent=4, backColor=colors.HexColor('#F2F2F2'),
                                    borderPadding=(1, 4, 1), spaceAfter=0, spaceBefore=0)
@@ -406,9 +436,32 @@ def footer(canvas, doc):
     canvas.restoreState()
 
 
-def build(md_path, pdf_path, columns, img_cache, fontdir):
+def exam_prep(md):
+    """检测卷模式：每个选项行（A./B./C./D. 开头）独立成段（前插空行）。
+
+    上下文护栏：仅当前一条非空行是题干（**N.）或另一选项行时才拆分，
+    避免误伤正文中同形行（全库 42 文件 1092 个选项行 100% 被该状态机覆盖，见
+    2026-09-10 打印前自查审计）。"""
+    out, prev = [], None
+    for ln in md.split('\n'):
+        s = ln.strip()
+        if (re.match(r'^[A-D]\.\s', s) and prev is not None
+                and (re.match(r'^\*\*\d+[.．]', prev) or re.match(r'^[A-D]\.\s', prev))):
+            out.append('')
+        if s:
+            prev = s
+        out.append(ln)
+    return '\n'.join(out)
+
+
+def build(md_path, pdf_path, columns, img_cache, fontdir, exam=False):
     register_fonts(fontdir)
     md = open(md_path, encoding='utf-8').read()
+    if exam:
+        # 检测卷/答案为手写填答用途：单栏满版（选项不再挤在窄栏里连排折断），
+        # 选项独立成段 + 悬挂缩进，节标题加粗加大（用户 2026-09-10 打印要求）。
+        columns = 1
+        md = exam_prep(md)
     html = markdown.markdown(md, extensions=['tables', 'fenced_code'])
     anchors = set(re.findall(r'<a\s+[^>]*?\bid="([^"]+)"', html))
     anchors |= set(re.findall(r'<a\s+[^>]*?\bname="([^"]+)"', html))
@@ -424,7 +477,7 @@ def build(md_path, pdf_path, columns, img_cache, fontdir):
     else:
         cw = W - ML - MR
         frames = [Frame(ML, MB, cw, FH, id='full')]
-    ctx = Ctx(md_path, img_cache, cw, FH)
+    ctx = Ctx(md_path, img_cache, cw, FH, exam=exam)
     Walker(ctx, anchors).feed(html)
     n_flow = len(ctx.story)
     # ---- 覆盖校验：防 tofu ----
@@ -454,7 +507,9 @@ if __name__ == '__main__':
     ap.add_argument('md')
     ap.add_argument('pdf')
     ap.add_argument('--columns', type=int, default=2)
+    ap.add_argument('--exam', action='store_true',
+                    help='检测卷/答案模式：单栏满版 + 选项独立成段悬挂缩进 + 节标题加粗加大')
     ap.add_argument('--img-cache', default='/tmp/pdfbuild/img')
     ap.add_argument('--fontdir', default='/tmp/pdffont')
     a = ap.parse_args()
-    build(a.md, a.pdf, a.columns, a.img_cache, a.fontdir)
+    build(a.md, a.pdf, a.columns, a.img_cache, a.fontdir, exam=a.exam)

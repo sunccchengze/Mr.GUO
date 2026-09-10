@@ -27,14 +27,16 @@ def md_name(folder, kind):
     return f'{BASE}-{P_NAMES[folder]}-{kind}.md'
 
 
-# (文件夹, md 文件名, 栏数)
+# (文件夹, md 文件名, 栏数, 检测卷模式)
+# 检测卷/答案合集 = 手写填答用途 -> exam 模式（md2pdf 内强制单栏 + 选项独立成段
+# + 悬挂缩进 + 节标题加粗加大，2026-09-10 用户打印要求）；白皮书保持原样。
 JOBS = []
 for folder in ['00-第零章', '01-第一篇', '02-第二篇', '03-第三篇', '04-第四篇']:
     for kind in ('白皮书', '检测卷合集', '答案与评分合集'):
-        JOBS.append((folder, md_name(folder, kind), 2))
-JOBS.append(('05-第五篇', md_name('05-第五篇', '白皮书'), 1))   # 代码密集，单栏
-JOBS.append(('06-第六篇', md_name('06-第六篇', '白皮书'), 2))
-JOBS.append(('07-附录', md_name('07-附录', '白皮书'), 1))       # 图册，单栏大图
+        JOBS.append((folder, md_name(folder, kind), 2, kind != '白皮书'))
+JOBS.append(('05-第五篇', md_name('05-第五篇', '白皮书'), 1, False))   # 代码密集，单栏
+JOBS.append(('06-第六篇', md_name('06-第六篇', '白皮书'), 2, False))
+JOBS.append(('07-附录', md_name('07-附录', '白皮书'), 1, False))       # 图册，单栏大图
 
 
 def build_cache():
@@ -60,17 +62,19 @@ def build_cache():
 
 def render():
     md2pdf = os.path.join(ROOT, 'tools', 'pdf_build', 'md2pdf.py')
-    for folder, md, cols in JOBS:
+    for folder, md, cols, exam in JOBS:
         mdpath = os.path.join(OUT, folder, md)
         pdf = mdpath[:-3] + '.pdf'
         assert os.path.exists(mdpath), f'缺 md：{mdpath}'
-        r = subprocess.run([sys.executable, md2pdf, mdpath, pdf, '--columns', str(cols),
-                            '--img-cache', IMG_CACHE, '--fontdir', FONTDIR],
-                           capture_output=True, text=True, cwd=ROOT)
+        cmd = [sys.executable, md2pdf, mdpath, pdf, '--columns', str(cols),
+               '--img-cache', IMG_CACHE, '--fontdir', FONTDIR]
+        if exam:
+            cmd.append('--exam')
+        r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
         if r.returncode != 0:
             print(f'FAIL {folder}/{md}:\n{r.stderr[-3000:]}')
             sys.exit(1)
-        print(f'{folder} {md} -> {cols}栏 OK')
+        print(f'{folder} {md} -> {"exam" if exam else str(cols) + "栏"} OK')
 
 
 def verify():
@@ -79,7 +83,7 @@ def verify():
     os.makedirs(PREVIEW, exist_ok=True)
     print('\n%-10s %-28s %4s %8s %4s  %s' % ('文件夹', '文件', '页数', '大小', '图数', '字体'))
     total_pages, total_size = 0, 0
-    for folder, md, _ in JOBS:
+    for folder, md, _, _ in JOBS:
         pdf = os.path.join(OUT, folder, md)[:-3] + '.pdf'
         r = PdfReader(pdf)
         fonts, nimgs = set(), 0
