@@ -72,6 +72,7 @@ FRONT_MATTER_PATH = os.path.join(ROOT, "docs", "front_matter.md")
 CH0_PATH = os.path.join(ROOT, "docs", "chapter0.md")
 PART6_PATH = os.path.join(ROOT, "docs", "part6.md")
 APPENDIX_PATH = os.path.join(ROOT, "docs", "appendix.md")
+GLOSSARY_PATH = os.path.join(ROOT, "docs", "glossary.md")
 BRIDGE_DIR = os.path.join(ROOT, "docs", "bridges")
 # 篇首过桥：插在对应 part 标题之后、该篇第一讲之前
 BRIDGES = {
@@ -267,6 +268,8 @@ def build_toc(lectures: dict[str, str]) -> list[str]:
 
     if read(APPENDIX_PATH):
         lines.append(toc_link("附录", "appendix"))
+    if read(GLOSSARY_PATH):
+        lines.append(toc_link("附录 G · 全书术语表（大二生分级版）", "glossary"))
 
     return lines
 
@@ -435,6 +438,12 @@ def main() -> None:
             doc.append("")
             doc.append(body_app)
     doc.append("")
+    if os.path.exists(GLOSSARY_PATH):
+        doc.append("---")
+        doc.append("")
+        doc.append(aid_tag("glossary"))
+        doc.append(read(GLOSSARY_PATH))
+        doc.append("")
 
     text = normalize_fences("\n".join(doc) + "\n")
     # 学习回路相对链接改写：讲稿源在 docs/lectures/（根下 3 层），其中
