@@ -1044,6 +1044,45 @@ def verify_prose() -> None:
           if bad else "所有自称 verbatim 的英文摘要均逐字命中 corpus")
 
 
+# --------------------------------------------------------------------------- R
+def verify_readability() -> None:
+    """R1–R4：面向"只学过高数线代的大二生"的可读性守卫（2026-09-13 审读整改新增）。
+
+    这四项针对的是审读中查实的、且一旦重写就极易回流的四种退化：
+      R1 占位回译：把同一句模板当"回译"贴在每条公式下（读者以为漏读了什么）。
+      R2 乱码公式：`(1)/(x)`、`∑_{i=1}^{n}^(S)`、`e⁻(` 这类拼接失败的 Unicode 式。
+      R3 空备注符号卡：3B 符号卡"备注"列成片空白，卡片失去"在哪学过"的导航功能。
+      R4 前置知识块缺失：每讲开场前必须有「开讲前置知识检查」块（指回第零章/过桥急救包）。
+    """
+    lect_files = sorted(f for f in glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md")))
+    PLACEHOLDER = "上式是主路径构件"
+    GARBLED = re.compile(r"\(1\)/\(|\^\{n\}\^|e⁻\(|\^\(S\)L\(|\)\)/\(")
+    r1, r2, r3, r4 = [], [], [], []
+    for f in lect_files:
+        n = os.path.basename(f)[:2]
+        t = open(f, encoding="utf-8").read()
+        body = re.sub(r"```.*?```", "", t, flags=re.S)
+        if PLACEHOLDER in body:
+            r1.append(f"第{n}讲×{body.count(PLACEHOLDER)}")
+        for ln, line in enumerate(body.split("\n"), 1):
+            if "〔式〕" in line and GARBLED.search(line):
+                r2.append(f"第{n}讲:{ln}")
+        m = re.search(r"##### 3B\. 本讲符号卡[^\n]*\n\n(\|.*?)(?:\n\n|\Z)", body, re.S)
+        if not m:
+            r3.append(f"第{n}讲无符号卡")
+        else:
+            rows = [r for r in m.group(1).split("\n")[2:] if r.startswith("|")]
+            empty = [r for r in rows if re.match(r"^\|[^|]*\|[^|]*\|\s*\|\s*$", r)]
+            if not rows or empty:
+                r3.append(f"第{n}讲空备注{len(empty)}行")
+        if "#### 开讲前置知识检查" not in body or body.find("#### 开讲前置知识检查") > body.find("#### 本讲开场 90 秒"):
+            r4.append(f"第{n}讲")
+    check("R1-无占位回译", not r1, "模板回译残留：" + "、".join(r1) if r1 else "20 讲无模板化占位回译")
+    check("R2-无乱码公式", not r2, "拼接失败的公式：" + "、".join(r2[:5]) if r2 else "全部〔式〕行无已知乱码模式")
+    check("R3-符号卡备注齐", not r3, "备注缺失：" + "、".join(r3[:5]) if r3 else "20 讲符号卡备注列均非空")
+    check("R4-前置知识块", not r4, "缺「开讲前置知识检查」：" + "、".join(r4) if r4 else "20 讲均在开场前设前置知识检查块")
+
+
 def main() -> int:
     verify_whitepaper()
     verify_code()
@@ -1053,6 +1092,7 @@ def main() -> int:
     verify_hygiene()
     verify_prose()
     verify_rigor()
+    verify_readability()
 
     if "--json" in sys.argv:
         print(json.dumps([{"item": c, "pass": ok, "detail": d} for c, ok, d in results],
