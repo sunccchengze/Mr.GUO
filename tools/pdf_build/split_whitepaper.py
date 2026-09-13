@@ -34,7 +34,7 @@ MARKERS = [
 ]
 
 EXPECT_TITLE = '# 燃气轮机智能设计与前沿算法自学白皮书'  # 主标题前缀（其后为副标题）
-APPENDIX_TAIL = 'vae_nurbs_endwall.png'  # 附录末行应含的图（图册收尾）
+APPENDIX_TAIL = '冲击冷却'  # 附录末行：术语表最后一行（2026-09-13 起附录 G 术语表收尾）
 
 
 def find_part_starts(lines):
