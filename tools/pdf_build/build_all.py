@@ -62,11 +62,15 @@ def build_cache():
 
 def render():
     md2pdf = os.path.join(ROOT, 'tools', 'pdf_build', 'md2pdf.py')
-    for folder, md, cols, exam in JOBS:
+    for job_i, (folder, md, cols, exam) in enumerate(JOBS):
         mdpath = os.path.join(OUT, folder, md)
         pdf = mdpath[:-3] + '.pdf'
+        # ReportLab on Windows can reject overwriting some long Unicode filenames
+        # (notably the code篇 output). Render to an ASCII temporary name, then
+        # atomically replace the stable user-facing filename.
+        tmp_pdf = os.path.join(OUT, folder, f'_pdf_build_{job_i:02d}.pdf')
         assert os.path.exists(mdpath), f'缺 md：{mdpath}'
-        cmd = [sys.executable, md2pdf, mdpath, pdf, '--columns', str(cols),
+        cmd = [sys.executable, md2pdf, mdpath, tmp_pdf, '--columns', str(cols),
                '--img-cache', IMG_CACHE, '--fontdir', FONTDIR]
         if exam:
             cmd.append('--exam')
@@ -74,6 +78,7 @@ def render():
         if r.returncode != 0:
             print(f'FAIL {folder}/{md}:\n{r.stderr[-3000:]}')
             sys.exit(1)
+        os.replace(tmp_pdf, pdf)
         print(f'{folder} {md} -> {"exam" if exam else str(cols) + "栏"} OK')
 
 

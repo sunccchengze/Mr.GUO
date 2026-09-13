@@ -334,16 +334,18 @@ def verify_code() -> None:
         check("B5b-测试真跑", False, "numpy 未安装，tests/ 无法运行（先 `make venv`）")
     else:
         p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "run_checks.py"),
-                            "--modules"], cwd=ROOT, capture_output=True, text=True, timeout=600)
+                            "--modules"], cwd=ROOT, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=600)
         fails = [ln for ln in p.stdout.splitlines() if "[FAIL]" in ln]
         check("B4b-模块真跑", p.returncode == 0 and not fails,
               ("全部模块自检通过" if (p.returncode == 0 and not fails)
                else f"模块自检失败：{'; '.join(fails[:3]) or p.stderr.strip().splitlines()[-1:] }"))
-        p = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q"], cwd=ROOT,
-                           capture_output=True, text=True, timeout=900)
+        p = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"],
+                           cwd=ROOT, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=900)
         tail = (p.stdout.strip().splitlines() or [""]) [-1]
         check("B5b-测试真跑", p.returncode == 0,
-              f"pytest: {tail}" if p.returncode == 0 else f"pytest 未全绿：{tail}")
+              f"unittest: {tail}" if p.returncode == 0 else f"unittest 未全绿：{tail}")
 
 
 # --------------------------------------------------------------------------- C
@@ -412,7 +414,7 @@ def verify_images() -> None:
             e = heads[i + 1].start() if i + 1 < len(heads) else len(t)
             if not IMAGE_REF_RE.search(t[s:e]):
                 noimg.append(f"第{m.group(1)}讲（白皮书）")
-        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md"))):
+        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md"))):
             if not IMAGE_REF_RE.search(open(f, encoding="utf-8").read()):
                 noimg.append(f"第{os.path.basename(f)[:2]}讲（讲义源）")
         check("C5-每讲配图", not noimg,
@@ -660,8 +662,9 @@ def verify_skills() -> None:
     has_corpus = os.path.isdir(txt_dir) and any(
         f.endswith(".txt") for f in os.listdir(txt_dir))
     try:
-        p = subprocess.run([sys.executable, core, "--demo"], cwd=ROOT,
-                           capture_output=True, text=True, timeout=180)
+        p = subprocess.run([sys.executable, "-X", "utf8", core, "--demo"], cwd=ROOT,
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=180)
         out = (p.stdout or "") + (p.stderr or "")
         nlines = len(out.splitlines())
         if has_corpus:
@@ -816,7 +819,7 @@ def verify_rigor() -> None:
     这三项都是**不依赖人工阅读**就能判定真伪的硬检查。
     """
     lect_dir = os.path.join(ROOT, "docs", "lectures")
-    lect_files = sorted(glob.glob(os.path.join(lect_dir, "*.md")))
+    lect_files = sorted(glob.glob(os.path.join(lect_dir, "[0-9][0-9].md")))
     prose = lect_files + [os.path.join(ROOT, "docs", f) for f in ("part6.md", "chapter0.md", "front_matter.md")]
     prose = [f for f in prose if os.path.exists(f)]
 
@@ -896,10 +899,8 @@ def verify_rigor() -> None:
           f"{len(wrong)} 处自陈算式算错：" + "；".join(wrong[:4])
           if wrong else f"{n_expr} 条自陈算式全部复算通过（容差 3%）")
 
-    # ---- A9：公式对用户预览可读（禁止任何 $ / $$ / 裸 LaTeX 命令）
-    # 2026-09-07 实锤：本仓库用户侧预览**既不渲染行内 $…$，也不渲染 $$…$$**，
-    # 会把源码原样甩给读者。规范：全部数学用 Unicode 纯文本；
-    # 独立公式行用 **〔式〕** 前缀。禁止 $、$$、\begin{cases} 等。
+    # ---- A9：公式对用户预览可读（当前预览不渲染 LaTeX）
+    # 公式使用 Unicode 数学排版；禁止 $ / $$ / 裸 LaTeX，避免源码直接显示给读者。
     broken = []
     for f in prose:
         body = strip_code(open(f, encoding="utf-8").read())

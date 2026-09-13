@@ -18,6 +18,11 @@ import subprocess
 import sys
 import time
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CODE = os.path.join(ROOT, "code")
 TESTS = os.path.join(ROOT, "tests")
@@ -26,8 +31,9 @@ TESTS = os.path.join(ROOT, "tests")
 def run_one(script: str) -> tuple:
     """运行一个脚本，返回 (是否成功, 耗时秒, 输出摘要)。"""
     t0 = time.time()
-    proc = subprocess.run([sys.executable, script],
-                          cwd=ROOT, capture_output=True, text=True)
+    proc = subprocess.run([sys.executable, "-X", "utf8", script],
+                          cwd=ROOT, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
     dt = time.time() - t0
     out = (proc.stdout or "") + (proc.stderr or "")
     summary = ""

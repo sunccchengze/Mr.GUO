@@ -73,6 +73,7 @@ CH0_PATH = os.path.join(ROOT, "docs", "chapter0.md")
 PART6_PATH = os.path.join(ROOT, "docs", "part6.md")
 APPENDIX_PATH = os.path.join(ROOT, "docs", "appendix.md")
 BRIDGE_DIR = os.path.join(ROOT, "docs", "bridges")
+READER_PATH_03_20 = os.path.join(ROOT, "docs", "reader_path_03_20.md")
 # 篇首过桥：插在对应 part 标题之后、该篇第一讲之前
 BRIDGES = {
     1: "bridge_A.md",  # 第零章 → 第一篇
@@ -396,6 +397,11 @@ def main() -> None:
         doc.append("")
         for i in range(start, end + 1):
             key = f"{i:02d}"
+            if key == "03" and os.path.exists(READER_PATH_03_20):
+                doc.append(read(READER_PATH_03_20))
+                doc.append("")
+                doc.append("> 📚 **以下第 03–20 讲原稿为论文深读层。第一遍阅读可跳过公式、实现细节与参数表。**")
+                doc.append("")
             if lectures[key]:
                 doc.append(decorate_lecture(lectures[key], key))
             else:

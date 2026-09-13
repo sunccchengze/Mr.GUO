@@ -35,8 +35,19 @@ CHARMAP = {
     '𝒢': '<b>G</b>', '𝒫': '<b>P</b>', '𝒳': '<b>X</b>', '𝒵': '<b>Z</b>', '𝔼': '<b>E</b>',
     '🎓': '【毕】', '👑': '【冠】', '💡': '【要】', '📌': '【钉】', '📎': '【附】',
     '📖': '【读】', '🗑': '【删】', '🚫': '【禁】', '🧭': '【引】',
+    '📚': '【书】', '🛑': '【停】',
     # 学习回路块（2026-09-10 收编）：🎯=开讲前目标、🤖=AI 辅助环节、📝=笔记
     '🎯': '【靶】', '🤖': '【AI】', '📝': '【笔】',
+    # 部分数学下标/修饰字符不在 Windows 常见字体中，PDF 层退化为可读 ASCII。
+    'ᵢ': 'i', 'ᵣ': 'r', 'ₖ': 'k', '\u1d40': 'T', '\u2093': 'g', '\u2098': 's',
+    '\u2090': 'a', '\u2091': 'e', '\u2092': 'o', '\u2093': 'x',
+    '\u2094': 'e', '\u2095': 'h', '\u2096': 'k', '\u2097': 'l',
+    '\u2098': 'm', '\u2099': 'n', '\u209a': 'p', '\u209b': 's',
+    '\u209c': 't', '\u2070': '0', '\u2071': 'i', '\u2072': '2',
+    '\u2073': '3', '\u2074': '4', '\u2075': '5', '\u2076': '6',
+    '\u2077': '7', '\u2078': '8', '\u2079': '9', '\u207a': '+',
+    '\u207b': '-', '\u207d': '(', '\u207e': ')', '\u207f': 'n',
+    '\u2c7c': 'V',
     '\uFE0F': '', '\uFE0E': '', '\u200D': '',  # 变体选择符 / ZWJ：直接去
 }
 # 2) Noto 缺、DejaVu 有 -> 用 DejaVu 渲染（构建前会校验覆盖）
@@ -58,7 +69,12 @@ def register_fonts(fontdir):
         FONTS[name] = set(FT(path).getBestCmap().keys())
     reg(NOTO, os.path.join(fontdir, 'NotoSansSC-Regular.ttf'))
     reg(NOTO_B, os.path.join(fontdir, 'NotoSansSC-Bold.ttf'))
-    reg(DJV, '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')
+    # Linux 默认字体路径在 Windows 上不存在；优先使用调用方字体目录里的
+    # DejaVuSans，缺失时用 Noto Sans SC 作为同一套回退字体，保证构建链可复现。
+    dj_path = os.path.join(fontdir, 'DejaVuSans.ttf')
+    if not os.path.exists(dj_path):
+        dj_path = os.path.join(fontdir, 'NotoSansSC-Regular.ttf')
+    reg(DJV, dj_path)
 
 
 def wrap_dejavu(markup):
