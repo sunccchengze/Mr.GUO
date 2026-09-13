@@ -18,6 +18,7 @@ build_whitepaper.py —— 由讲稿源文件装配白皮书
 
 from __future__ import annotations
 
+import glob
 import os
 import re
 
@@ -68,8 +69,10 @@ PAPER_SHORT = {
     "17": "GTO", "18": "ResUNet-Sim", "19": "SHAP-Turbine", "20": "SPIE-AI",
 }
 
-FRONT_MATTER_PATH = os.path.join(ROOT, "docs", "front_matter.md")
+FRONT_MATTER_NAME = "front_matter.md"
+FRONT_MATTER_PATH = os.path.join(ROOT, "docs", FRONT_MATTER_NAME)
 CH0_PATH = os.path.join(ROOT, "docs", "chapter0.md")
+CH0B_PATH = os.path.join(ROOT, "docs", "chapter0b.md")  # 第零章 B：四张补丁卡
 PART6_PATH = os.path.join(ROOT, "docs", "part6.md")
 APPENDIX_PATH = os.path.join(ROOT, "docs", "appendix.md")
 BRIDGE_DIR = os.path.join(ROOT, "docs", "bridges")
@@ -197,6 +200,23 @@ def decorate_chapter0(body: str) -> str:
     return body
 
 
+def decorate_chapter0b(body: str) -> str:
+    """给第零章 B（补丁包）主标题与 B.x 小节挂稳定锚点。"""
+    if not body:
+        return body
+    body = inject_heading_anchor(
+        body,
+        r"^#\s+第零章 B\b.*$",
+        lambda _m: "ch0b",
+    )
+    body = inject_heading_anchor(
+        body,
+        r"^###\s+(B\.(\d)\s+.*)$",
+        lambda m: f"ch0b-{m.group(2)}",
+    )
+    return body
+
+
 def decorate_lecture(content: str, key: str) -> str:
     """给单讲主标题挂 lec-NN 锚点。"""
     if not content:
@@ -235,6 +255,14 @@ def build_toc(lectures: dict[str, str]) -> list[str]:
         for h in re.findall(r"^###\s+(0\.(\d)\s+.*)$", toc0, re.M):
             title, num = h[0], h[1]
             lines.append(toc_link(title, f"ch0-{num}", indent=1))
+
+    toc0b = read(CH0B_PATH)
+    if toc0b:
+        lines.append(toc_link(
+            "第零章 B · 四张补丁卡：概率统计 / 神经网络 / 叶轮机几何 / 无量纲数", "ch0b"))
+        for h in re.findall(r"^###\s+(B\.(\d)\s+.*)$", toc0b, re.M):
+            title, num = h[0], h[1]
+            lines.append(toc_link(title, f"ch0b-{num}", indent=1))
 
     # 篇序号：PARTS 顺序即 1..4
     bridge_titles = {
@@ -315,15 +343,15 @@ def source_stamp() -> str:
     """
     import hashlib
     h = hashlib.sha256()
-    paths = []
-    for base in (os.path.join(ROOT, "docs"), CODE_DIR):
-        for dirpath, dirnames, files in os.walk(base):
-            # 派生目录不计入：__pycache__ 随每次运行重写，计入会导致戳漂移（F4 误报）。
-            dirnames[:] = [d for d in dirnames if d != "__pycache__"]
-            for f in sorted(files):
-                if f.startswith(".") or f.endswith((".pyc", ".pyo")):
-                    continue
-                paths.append(os.path.join(dirpath, f))
+    docs = os.path.join(ROOT, "docs")
+    # 只哈希**真正参与装配**的源文件。docs/ 下还有审计/方案类文档（如
+    # docs/模拟读者验收_*.md），它们不进白皮书，若计入则「写一份审计报告」
+    # 也会让白皮书的内容戳漂移，F4 随之误报（2026-09-13 修）。
+    paths = [os.path.join(docs, f) for f in (
+        FRONT_MATTER_NAME, "chapter0.md", "chapter0b.md", "part6.md", "appendix.md")]
+    paths += sorted(glob.glob(os.path.join(docs, "lectures", "[0-9][0-9].md")))
+    paths += sorted(glob.glob(os.path.join(docs, "bridges", "bridge_[A-D].md")))
+    paths += sorted(glob.glob(os.path.join(CODE_DIR, "*.py")))
     for p in sorted(paths):
         try:
             with open(p, "rb") as fh:
@@ -375,6 +403,12 @@ def main() -> None:
 
     if os.path.exists(CH0_PATH):
         doc.append(decorate_chapter0(read(CH0_PATH)))
+        doc.append("")
+        doc.append("---")
+        doc.append("")
+
+    if os.path.exists(CH0B_PATH):
+        doc.append(decorate_chapter0b(read(CH0B_PATH)))
         doc.append("")
         doc.append("---")
         doc.append("")

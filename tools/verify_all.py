@@ -412,7 +412,7 @@ def verify_images() -> None:
             e = heads[i + 1].start() if i + 1 < len(heads) else len(t)
             if not IMAGE_REF_RE.search(t[s:e]):
                 noimg.append(f"第{m.group(1)}讲（白皮书）")
-        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md"))):
+        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md"))):
             if not IMAGE_REF_RE.search(open(f, encoding="utf-8").read()):
                 noimg.append(f"第{os.path.basename(f)[:2]}讲（讲义源）")
         check("C5-每讲配图", not noimg,
@@ -441,7 +441,7 @@ def verify_images() -> None:
         corp_blob[k] = corp_blob.get(k, "") + _n(open(_p, encoding="utf-8").read())
 
     nosrc, unhit = [], []
-    for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md"))):
+    for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md"))):
         for m in re.finditer(r"!\[([^\]]*)\]\(\./images/([^)]+)\)", open(f, encoding="utf-8").read()):
             alt, img = m.group(1), m.group(2)
             nums = re.findall(r"\d+\.?\d*\s*%|\d+\.\d+|\b\d{2,}\b", alt)
@@ -816,8 +816,9 @@ def verify_rigor() -> None:
     这三项都是**不依赖人工阅读**就能判定真伪的硬检查。
     """
     lect_dir = os.path.join(ROOT, "docs", "lectures")
-    lect_files = sorted(glob.glob(os.path.join(lect_dir, "*.md")))
-    prose = lect_files + [os.path.join(ROOT, "docs", f) for f in ("part6.md", "chapter0.md", "front_matter.md")]
+    lect_files = sorted(glob.glob(os.path.join(lect_dir, "[0-9][0-9].md")))
+    prose = lect_files + [os.path.join(ROOT, "docs", f) for f in
+                          ("part6.md", "chapter0.md", "chapter0b.md", "front_matter.md")]
     prose = [f for f in prose if os.path.exists(f)]
 
     def strip_code(t: str) -> str:
@@ -978,8 +979,9 @@ def verify_prose() -> None:
     """A7/F5：验收器长期只查\"数字有没有标签\"，从不查\"形容词有没有出处\"与\"逐字是不是真逐字\"。"""
     # ---- A7：无量化形容词必须带来源标注（规范 §三.3）
     offend = []
-    files = sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md")))
-    files += [os.path.join(ROOT, "docs", f) for f in ("part6.md", "chapter0.md", "front_matter.md")]
+    files = sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md")))
+    files += [os.path.join(ROOT, "docs", f) for f in
+              ("part6.md", "chapter0.md", "chapter0b.md", "front_matter.md")]
     # 白皮书虽是派生物，仍须单独扫：否则有人直接改白皮书注入套话时，
     # 只有 F4（源一致）会红，A7 本身却毫无感知——反身测试正是这样抓到该盲区的。
     files.append(WHITEPAPER)
