@@ -5,6 +5,7 @@
 #   make corpus                   # 抽取 13 PDF + 2 HTML 正文到 corpus/txt/（不入库）
 #   make whitepaper               # 由 docs/lectures/ 装配白皮书
 #   make checks                   # code/ 模块自检 + tests/ 单元测试
+#   make prereq                   # 读者可达性审计（大二学生读得懂吗？）→ docs/读者可达性审计_数据.md
 #   make verify                   # 全仓验收（目标 A–F），任一 FAIL 即退出码 1
 #   make wp-strict                  # 白皮书逐讲明细校验（目标 A 定位用）
 #   make selftest                 # 反身测试：确认验收器对缺陷真的敏感
@@ -14,7 +15,7 @@
 PYTHON ?= python3
 VENV   ?= .venv
 
-.PHONY: all venv corpus whitepaper checks tests modules verify wp-strict selftest clean help
+.PHONY: all venv corpus whitepaper checks tests modules prereq prereq-strict verify wp-strict selftest clean help
 
 help:
 	@grep -E '^#   make ' Makefile | sed 's/^#   //'
@@ -39,6 +40,12 @@ tests:
 
 checks:
 	$(PYTHON) tools/run_checks.py
+
+prereq:
+	$(PYTHON) tools/prereq_audit.py --out docs/读者可达性审计_数据.md
+
+prereq-strict:
+	$(PYTHON) tools/prereq_audit.py --strict
 
 verify:
 	$(PYTHON) tools/verify_all.py
