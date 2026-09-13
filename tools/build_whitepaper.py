@@ -73,6 +73,11 @@ CH0_PATH = os.path.join(ROOT, "docs", "chapter0.md")
 PART6_PATH = os.path.join(ROOT, "docs", "part6.md")
 APPENDIX_PATH = os.path.join(ROOT, "docs", "appendix.md")
 BRIDGE_DIR = os.path.join(ROOT, "docs", "bridges")
+# 补丁册：docs/patches/PXX_*.md（文件名以 P + 两位数字开头），自动进目录与正文。
+# 存在的意义：目标读者是"只学过高数+线代的大二学生"，而 20 讲要他懂概率论、
+# 高斯过程、神经网络、端壁二次流。这 12 张卡就是那 15% 的缺口。
+PATCH_DIR = os.path.join(ROOT, "docs", "patches")
+PATCH_INDEX = os.path.join(PATCH_DIR, "README.md")
 # 篇首过桥：插在对应 part 标题之后、该篇第一讲之前
 BRIDGES = {
     1: "bridge_A.md",  # 第零章 → 第一篇
@@ -104,6 +109,34 @@ def toc_link(text: str, aid: str, indent: int = 0) -> str:
     """目录条目：显示文案 → 稳定锚点。"""
     pad = "  " * indent
     return f"{pad}- [{text}](#{aid})"
+
+
+def patch_aid(key: str) -> str:
+    """`P01` → `patch-P01`。"""
+    return f"patch-{key}"
+
+
+def discover_patches() -> list[tuple[str, str, str]]:
+    """扫 docs/patches/ 下的 PXX_*.md，返回 [(key, 标题, 正文), ...] 按编号排序。
+
+    未找到任何卡时返回空列表 —— 装配器不应因为补丁册缺失而崩。
+    """
+    if not os.path.isdir(PATCH_DIR):
+        return []
+    out = []
+    for f in sorted(os.listdir(PATCH_DIR)):
+        m = re.match(r"^(P\d{2})_.*\.md$", f)
+        if not m:
+            continue
+        key = m.group(1)
+        body = open(os.path.join(PATCH_DIR, f), encoding="utf-8").read().strip()
+        title = ""
+        for ln in body.splitlines():
+            if ln.startswith("# "):
+                title = ln[2:].strip()
+                break
+        out.append((key, title or key, body))
+    return out
 
 
 def code_aid(filename: str) -> str:
@@ -243,6 +276,13 @@ def build_toc(lectures: dict[str, str]) -> list[str]:
         3: "过桥 C · 从优化到场预测",
         4: "过桥 D · 从网络回到物理",
     }
+    # 补丁册：单独一节，列在目录里（第零章之后、第一篇之前）
+    patches = discover_patches()
+    if patches:
+        lines.append(toc_link("🔧 补丁册：把「没学过的课」补成 %d 张卡" % len(patches), "patch-book"))
+        for key, title, _body in patches:
+            lines.append(toc_link(f"{key} · {title}", patch_aid(key), indent=1))
+
     for part_idx, (start, end, _, ptitle, _) in enumerate(PARTS, start=1):
         lines.append(toc_link(ptitle, f"part-{part_idx}"))
         if part_idx in bridge_titles:
@@ -378,6 +418,24 @@ def main() -> None:
         doc.append("")
         doc.append("---")
         doc.append("")
+
+    # 补丁册正文：目录锚点 patch-book，逐卡挂 patch-PXX
+    patches = discover_patches()
+    if patches:
+        doc.append(aid_tag("patch-book"))
+        doc.append("# 🔧 补丁册：把「没学过的课」补成 %d 张卡" % len(patches))
+        doc.append("")
+        if os.path.exists(PATCH_INDEX):
+            doc.append(read(PATCH_INDEX))
+            doc.append("")
+        doc.append("---")
+        doc.append("")
+        for key, _title, body in patches:
+            doc.append(aid_tag(patch_aid(key)))
+            doc.append(body)
+            doc.append("")
+            doc.append("---")
+            doc.append("")
 
     for part_idx, (start, end, ptitle_full, ptitle, pintro) in enumerate(PARTS, start=1):
         doc.append(aid_tag(f"part-{part_idx}"))
