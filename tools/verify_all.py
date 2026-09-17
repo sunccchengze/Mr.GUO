@@ -334,18 +334,16 @@ def verify_code() -> None:
         check("B5b-测试真跑", False, "numpy 未安装，tests/ 无法运行（先 `make venv`）")
     else:
         p = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "run_checks.py"),
-                            "--modules"], cwd=ROOT, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=600)
+                            "--modules"], cwd=ROOT, capture_output=True, text=True, timeout=600)
         fails = [ln for ln in p.stdout.splitlines() if "[FAIL]" in ln]
         check("B4b-模块真跑", p.returncode == 0 and not fails,
               ("全部模块自检通过" if (p.returncode == 0 and not fails)
                else f"模块自检失败：{'; '.join(fails[:3]) or p.stderr.strip().splitlines()[-1:] }"))
-        p = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"],
-                           cwd=ROOT, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=900)
+        p = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q"], cwd=ROOT,
+                           capture_output=True, text=True, timeout=900)
         tail = (p.stdout.strip().splitlines() or [""]) [-1]
         check("B5b-测试真跑", p.returncode == 0,
-              f"unittest: {tail}" if p.returncode == 0 else f"unittest 未全绿：{tail}")
+              f"pytest: {tail}" if p.returncode == 0 else f"pytest 未全绿：{tail}")
 
 
 # --------------------------------------------------------------------------- C
@@ -414,7 +412,7 @@ def verify_images() -> None:
             e = heads[i + 1].start() if i + 1 < len(heads) else len(t)
             if not IMAGE_REF_RE.search(t[s:e]):
                 noimg.append(f"第{m.group(1)}讲（白皮书）")
-        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md"))):
+        for f in sorted(glob.glob(os.path.join(ROOT, "docs", "lectures", "*.md"))):
             if not IMAGE_REF_RE.search(open(f, encoding="utf-8").read()):
                 noimg.append(f"第{os.path.basename(f)[:2]}讲（讲义源）")
         check("C5-每讲配图", not noimg,
@@ -662,9 +660,8 @@ def verify_skills() -> None:
     has_corpus = os.path.isdir(txt_dir) and any(
         f.endswith(".txt") for f in os.listdir(txt_dir))
     try:
-        p = subprocess.run([sys.executable, "-X", "utf8", core, "--demo"], cwd=ROOT,
-                           capture_output=True, text=True, encoding="utf-8",
-                           errors="replace", timeout=180)
+        p = subprocess.run([sys.executable, core, "--demo"], cwd=ROOT,
+                           capture_output=True, text=True, timeout=180)
         out = (p.stdout or "") + (p.stderr or "")
         nlines = len(out.splitlines())
         if has_corpus:
@@ -819,7 +816,7 @@ def verify_rigor() -> None:
     这三项都是**不依赖人工阅读**就能判定真伪的硬检查。
     """
     lect_dir = os.path.join(ROOT, "docs", "lectures")
-    lect_files = sorted(glob.glob(os.path.join(lect_dir, "[0-9][0-9].md")))
+    lect_files = sorted(glob.glob(os.path.join(lect_dir, "*.md")))
     prose = lect_files + [os.path.join(ROOT, "docs", f) for f in ("part6.md", "chapter0.md", "front_matter.md")]
     prose = [f for f in prose if os.path.exists(f)]
 
@@ -899,8 +896,10 @@ def verify_rigor() -> None:
           f"{len(wrong)} 处自陈算式算错：" + "；".join(wrong[:4])
           if wrong else f"{n_expr} 条自陈算式全部复算通过（容差 3%）")
 
-    # ---- A9：公式对用户预览可读（当前预览不渲染 LaTeX）
-    # 公式使用 Unicode 数学排版；禁止 $ / $$ / 裸 LaTeX，避免源码直接显示给读者。
+    # ---- A9：公式对用户预览可读（禁止任何 $ / $$ / 裸 LaTeX 命令）
+    # 2026-09-07 实锤：本仓库用户侧预览**既不渲染行内 $…$，也不渲染 $$…$$**，
+    # 会把源码原样甩给读者。规范：全部数学用 Unicode 纯文本；
+    # 独立公式行用 **〔式〕** 前缀。禁止 $、$$、\begin{cases} 等。
     broken = []
     for f in prose:
         body = strip_code(open(f, encoding="utf-8").read())
@@ -1045,6 +1044,45 @@ def verify_prose() -> None:
           if bad else "所有自称 verbatim 的英文摘要均逐字命中 corpus")
 
 
+# --------------------------------------------------------------------------- R
+def verify_readability() -> None:
+    """R1–R4：面向"只学过高数线代的大二生"的可读性守卫（2026-09-13 审读整改新增）。
+
+    这四项针对的是审读中查实的、且一旦重写就极易回流的四种退化：
+      R1 占位回译：把同一句模板当"回译"贴在每条公式下（读者以为漏读了什么）。
+      R2 乱码公式：`(1)/(x)`、`∑_{i=1}^{n}^(S)`、`e⁻(` 这类拼接失败的 Unicode 式。
+      R3 空备注符号卡：3B 符号卡"备注"列成片空白，卡片失去"在哪学过"的导航功能。
+      R4 前置知识块缺失：每讲开场前必须有「开讲前置知识检查」块（指回第零章/过桥急救包）。
+    """
+    lect_files = sorted(f for f in glob.glob(os.path.join(ROOT, "docs", "lectures", "[0-9][0-9].md")))
+    PLACEHOLDER = "上式是主路径构件"
+    GARBLED = re.compile(r"\(1\)/\(|\^\{n\}\^|e⁻\(|\^\(S\)L\(|\)\)/\(")
+    r1, r2, r3, r4 = [], [], [], []
+    for f in lect_files:
+        n = os.path.basename(f)[:2]
+        t = open(f, encoding="utf-8").read()
+        body = re.sub(r"```.*?```", "", t, flags=re.S)
+        if PLACEHOLDER in body:
+            r1.append(f"第{n}讲×{body.count(PLACEHOLDER)}")
+        for ln, line in enumerate(body.split("\n"), 1):
+            if "〔式〕" in line and GARBLED.search(line):
+                r2.append(f"第{n}讲:{ln}")
+        m = re.search(r"##### 3B\. 本讲符号卡[^\n]*\n\n(\|.*?)(?:\n\n|\Z)", body, re.S)
+        if not m:
+            r3.append(f"第{n}讲无符号卡")
+        else:
+            rows = [r for r in m.group(1).split("\n")[2:] if r.startswith("|")]
+            empty = [r for r in rows if re.match(r"^\|[^|]*\|[^|]*\|\s*\|\s*$", r)]
+            if not rows or empty:
+                r3.append(f"第{n}讲空备注{len(empty)}行")
+        if "#### 开讲前置知识检查" not in body or body.find("#### 开讲前置知识检查") > body.find("#### 本讲开场 90 秒"):
+            r4.append(f"第{n}讲")
+    check("R1-无占位回译", not r1, "模板回译残留：" + "、".join(r1) if r1 else "20 讲无模板化占位回译")
+    check("R2-无乱码公式", not r2, "拼接失败的公式：" + "、".join(r2[:5]) if r2 else "全部〔式〕行无已知乱码模式")
+    check("R3-符号卡备注齐", not r3, "备注缺失：" + "、".join(r3[:5]) if r3 else "20 讲符号卡备注列均非空")
+    check("R4-前置知识块", not r4, "缺「开讲前置知识检查」：" + "、".join(r4) if r4 else "20 讲均在开场前设前置知识检查块")
+
+
 def main() -> int:
     verify_whitepaper()
     verify_code()
@@ -1054,6 +1092,7 @@ def main() -> int:
     verify_hygiene()
     verify_prose()
     verify_rigor()
+    verify_readability()
 
     if "--json" in sys.argv:
         print(json.dumps([{"item": c, "pass": ok, "detail": d} for c, ok, d in results],
