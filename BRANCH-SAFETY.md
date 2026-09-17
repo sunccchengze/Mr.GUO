@@ -154,6 +154,7 @@ git bundle create /tmp/backup.bundle HEAD
 | :--- | :--- | :--- |
 | 2026-09-07 | 引入本手册；分支 `arena/01a07a05-mr-guo` 含 TOC 修复 + 分叉吸收 | 已落地 |
 | 2026-09-07 | `git push origin arena/01a07a05-mr-guo:main`（快进） | ✅ **成功**：`main` 与会话分支同指 `493311f`；**0 个 PR**；会话通道仍可用（本提交即证明） |
+| 2026-09-17 | 第十九轮分支大整合（会话 `arena/01a0ae1c-mr-guo`）：图书主线终态 `-X theirs` 收编、两实验分支 `-s ours` 并历史 + 独有产物入 `archive/`；`merge -X theirs` 会把「对方已删除、我方独有」的同名文件留在原地（`docs/lectures/` 模板旧副本，C5/D7 红），**合并后必须复查孤儿副本** | ✅ 快进推 `main` 成功；8 个 arena 分支收编后删除 7 个；**新坑**：`-X theirs` ≠ 全自动——删除/修改冲突它会保留我方副本 |
 
 ### 从 SCZ_Archived 学到、已在本仓使用的招
 
